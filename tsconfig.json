@@ -14,9 +14,10 @@
       "strictNullChecks": false,    
       "allowSyntheticDefaultImports": true,  
       "declaration": true,     
-      "paths": {                 
+      "paths": {  
+        "@/*": ["./*"],        
       }
     },
-    "include": ["./src/index.ts"],
+    "include": ["./src/index.ts", "./rws.config.ts"],
     "exclude": []
   }
