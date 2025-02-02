@@ -19,7 +19,7 @@ export abstract class RWSBuilder<C> {
         this.TYPE = params.builderType;        
     }
 
-    async build(cfg?: C): Promise<void>
+    async build(watch: boolean = false): Promise<void>
     {
         throw new Error('Declare build() method');
     }

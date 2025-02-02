@@ -1,4 +1,5 @@
-import { IManagerConfig } from '../types/manager';
+import { BuilderType, BuildType } from '../managers/RWSManager';
+import { BuildersConfigurations, IManagerConfig, BuildConfig, BaseRWSConfig, RunnableConfig } from '../types/manager';
 import Singleton from './_singleton';
 
 export class ConfigHelper<T extends object = {}> extends Singleton {
@@ -19,6 +20,17 @@ export class ConfigHelper<T extends object = {}> extends Singleton {
     get<K extends keyof IManagerConfig = any>(key: K): IManagerConfig[K]
     {
         return this.data[key];
+    }
+
+    getBuildTypeSection(type: Exclude<BuildType, BuildType.ALL>): BaseRWSConfig | RunnableConfig
+    {
+        return this.data[type as keyof IManagerConfig];
+    }
+
+    getBuilderSection(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType): BuildConfig<any> | null
+    {
+        const buildersConfig: BuildersConfigurations = this.getBuildTypeSection(type)._builders;
+        return buildersConfig ? buildersConfig[builderType as keyof BuildersConfigurations] : null
     }
 
     set<K extends keyof IManagerConfig = any, V extends IManagerConfig[K] = any>(key: K, value: V): ConfigHelper<T>;

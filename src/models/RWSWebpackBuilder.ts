@@ -8,7 +8,7 @@ import { BuilderType } from '../managers/RWSManager';
 import { BuildersConfigurations, IManagerConfig, IWebpackRWSConfig } from '../types/manager';
 
 export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
-    async build(): Promise<void> {        
+    async build(watch: boolean = false): Promise<void> {        
         const buildersConfig: BuildersConfigurations = this.config.get(this.buildType as keyof IManagerConfig)._builders;
         const configBuildSection = buildersConfig ? buildersConfig[this.TYPE as keyof BuildersConfigurations] : null
         const buildCfg =  configBuildSection && configBuildSection.config ? configBuildSection.config  : null;
@@ -24,7 +24,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             this.log(`Building...`);  
 
             await this.runCommand(
-                `npx webpack --config ${webpackFileConfigPath}${this.produceParamString(webpackCmdParams)}`, 
+                `npx webpack --config ${webpackFileConfigPath}${this.produceParamString(webpackCmdParams)}${watch ? ' --watch' : ''}`, 
                 this.workspacePath, 
                 !this.isVerbose(), {
                     VERBOSE: this.isVerbose() ? 1 : 0

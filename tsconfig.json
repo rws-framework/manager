@@ -18,6 +18,6 @@
         "@/*": ["./*"],        
       }
     },
-    "include": ["./src/index.ts", "./rws.config.ts"],
+    "include": ["./src/index.ts"],
     "exclude": []
   }

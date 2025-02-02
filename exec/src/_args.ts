@@ -12,7 +12,9 @@ export type CommandContext = {
 
 export function getCommandContext(commands: CommandsType): CommandContext
 {    
-    const cliExecPath: string = process.argv.pop();    
+    
+    const cliExecPath: string = process.argv.pop();     
+       
     const args: string[] = process.argv.slice(2).filter(cmd => cmd !== '--rebuild' && cmd !== cliExecPath);    
     const isAfterRebuild: boolean = process.argv.slice(2).find(cmd => cmd == '--rebuild') !== null;
 

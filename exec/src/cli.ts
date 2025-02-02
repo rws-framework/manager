@@ -19,6 +19,12 @@ async function main(): Promise<void>
 
     console.log(chalk.bgGreen('[RWS MANAGER] Build complete.'));
   }
+
+  if(primaryCommand === 'run'){
+    await manager.run(secondaryCommand as BuildType);
+
+    console.log(chalk.bgGreen('[RWS MANAGER] Run complete.'));
+  }
 }
 
 console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));

@@ -14,9 +14,33 @@ const WEBPACK_PLUGINS = [new webpack.optimize.ModuleConcatenationPlugin()];
 
 const modules_setup = [rootPackageNodeModules];
 const isDev = true;
+const isVerbose = process.env.VERBOSE === 1 ?? null;
 
-const mainEntry = './src/cli.ts';
+function prettyLog(data){
+  if(!isVerbose){
+    return;
+  }
+
+  for(const key of Object.keys(data)){
+    const valObject = data[key];
+
+    console.log(`${chalk.yellow('[Log]')} ${chalk.blue(key)}:`, valObject)
+  }
+}
+
+
+const mainEntry = './src/index.ts';
 const vPath = path.join(__dirname, 'build');
+
+prettyLog({ backendBuild:{
+  thisPackage,
+  rootPackageNodeModules,
+  appRootPath,
+  internalCwd,
+  vPath,
+  mainEntry  
+}});
+
 
 const cfgExport = {
   context: __dirname,
@@ -36,7 +60,8 @@ const cfgExport = {
     extensions: ['.ts', '.js'],
     modules: modules_setup,
     alias: {       
-      '@': vPath      
+      '@V': vPath,
+      '@': path.resolve(appRootPath, 'src'), // Add explicit resolution for src directory
     },    
     fallback: {
       "kerberos": false,

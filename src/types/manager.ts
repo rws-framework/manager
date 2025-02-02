@@ -11,18 +11,30 @@ export interface BuildersConfigurations {
     webpack?: IWebpackRWSConfig
 }
 
-export interface IWebpackRWSConfig {
-    config?: WebpackConfig,
-    customConfigFile?: string
+export interface BuildConfig<T> {
+    config?: T,
+    customConfigFile?: string,
+}
+
+export interface IWebpackRWSConfig extends BuildConfig<WebpackConfig> {
+
+}
+
+export interface RunnableConfig extends BaseRWSConfig {
+    customOutputFile?: string;
 }
 
 export interface IFrontendConfig extends BaseRWSConfig {
 }
 
-export interface IBackendConfig  extends BaseRWSConfig {    
+export interface IBackendConfig  extends RunnableConfig {    
+}
+
+export interface ICLIConfig  extends RunnableConfig {    
 }
 
 export interface IManagerConfig {
     front?: IFrontendConfig;
     back?: IBackendConfig;
+    cli?: ICLIConfig;
 }

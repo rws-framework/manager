@@ -3,10 +3,10 @@ import { IManagerConfig } from './src/index';
 export default function(): IManagerConfig {
     return {
         front: {
-            entrypoint: './@dev/frontend'           
+            entrypoint: './example/frontend'           
         },
         back: {
-            entrypoint: './@dev/backend'
+            entrypoint: './example/backend'
         }
     }
 }

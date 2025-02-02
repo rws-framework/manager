@@ -1,90 +1,38 @@
 #!/usr/bin/env node
-'use strict';
-
-const webpack = require('webpack');
-const webpackCfg = require('./webpack.config');
 
 const { rwsShell } = require('@rws-framework/console');
 const chalk = require('chalk');
-const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-const params = process.argv.splice(2);
-let paramsString = params.length ? (' ' + params.join(' ')) : '';
 
-const appRoot = process.cwd();
-const rwsCliConfigDir = path.resolve(appRoot, 'node_modules', '.rws', 'cli');
-const getCachedPath = (key) => path.resolve(rwsCliConfigDir, key);
+const { needsCacheWarming } = require('./inc/cache');
+const { getParams } = require('./inc/params');
+const { buildCLI } = require('./inc/build');
 
-const currentCwd = path.resolve(__dirname);
-const isVerbose = params.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
-
-const oldLog = console.log;
-
-console.log = (data) => {
-    if(isVerbose){
-        oldLog(data);
-    }
-}
-
-function needsCacheWarming(){
-
-    if(!fs.existsSync(getCachedPath('paths')) || !fs.existsSync(getCachedPath('checksum'))){
-        return true;
-    }
-    
-    const fileList = fs.readFileSync(getCachedPath('paths'), 'utf-8').split('\n');    
-
-    if(fileList.length){
-        const fileContents = [];
-        for(const filePath of fileList){
-            if(fs.existsSync(filePath)){
-                fileContents.push(fs.readFileSync(filePath, 'utf-8'));
-            }
-        }
-        const finalMD5 = crypto.createHash('md5').update(fileContents.join('\n')).digest('hex');
-        const cachedMD5 = fs.readFileSync(getCachedPath('checksum'), 'utf-8');
-
-        if(finalMD5 === cachedMD5){            
-            return false;
-        }
-    }        
-
-    return true;
-}
+let {    
+    appRoot,
+    rwsCliConfigDir,
+    currentCwd,
+    isVerbose,
+    params,
+    paramsString
+} = getParams();
 
 async function main()
-{
+{   
+    const oldLog = console.log;
+    
+    console.log = (data) => {
+        if(isVerbose){
+            oldLog(data);
+        }
+    }
+
     const hasRebuild = paramsString.split(' ').pop().indexOf('--rebuild') > -1;
-    const doWarmCache = needsCacheWarming() || hasRebuild;  
+    const doWarmCache = needsCacheWarming(rwsCliConfigDir) || hasRebuild;  
 
     if(doWarmCache){
-        console.log(chalk.yellow('[RWS CLI] Building CLI client...'));
-
-        const cacheTypes = ['paths', 'checksum'];
-
-        for(const type of cacheTypes){
-            if(fs.existsSync(getCachedPath(type))){
-                fs.unlinkSync(getCachedPath(type));
-            }
-        }      
-        
-        const tscBuild = await tsc(__dirname, process.cwd());
-       
-        try {
-            await  new Promise((resolve) => {
-                webpack(webpackCfg).run((webpackBuildData) => {
-                    resolve();
-                });
-            });
-        } catch (e) {
-            throw new Error(`Webpack build error: ${e.message}\n${e.stack}`)
-        }
-
-        tscBuild.remove();
-
-        console.log(chalk.green('[RWS CLI] CLI client generated'));
-    
+        await buildCLI(appRoot, rwsCliConfigDir, isVerbose);    
     }else{
         console.log(chalk.blue('[RWS CLI CACHE] Starting command from built CLI client.'));
     }    
@@ -101,54 +49,6 @@ async function main()
     ].filter((item) => item !== null).join(' ');
 
     await rwsShell.runCommand(`node ${path.join(currentCwd, 'build', 'main.cli.rws.js')}${paramsString}`, process.cwd());
-}
-
-async function tsc(execPath, appRootPath, extendedConfig = {})
-{      
-    const tempCfg = enableTempCfg(execPath, appRootPath, extendedConfig);   
-    const extendedConfigString = extendedConfig ? ` -p ${tempCfg.build().tempConfigPath}` : '';  
-    await rwsShell.runCommand(`npx tsc${extendedConfigString}`, execPath, !isVerbose);
-
-    return {
-        remove: tempCfg.remove
-    }         
-}
-
-function enableTempCfg(execPath, appRootPath, cfg = {}){        
-    const tempConfigContent = {
-        extends: "./tsconfig.json",
-        compilerOptions: {
-            baseUrl: ".",
-            paths: {
-                // Mirror webpack aliases to TypeScript paths
-                "@V/*": [path.relative(execPath, './build') + "/*"],
-                "@/*": [path.relative(execPath, appRootPath) + "/*"],
-                // Add base paths for non-wildcard imports
-                "@V": [path.relative(execPath, './build')],
-                "@": [path.relative(execPath, appRootPath)]
-            }
-        },        
-        include: [
-            path.resolve(appRootPath, 'src')
-        ],
-        ...cfg
-    };    
-    
-    const tempConfigPath = path.join(execPath, '.tmp.gitignore.json');
-
-    return {
-        build: () => {            
-            fs.writeFileSync(tempConfigPath, JSON.stringify(tempConfigContent, null, 2));
-
-            return {
-                tempConfigPath,
-                tempConfigContent
-            }
-        },
-        remove: () => {
-            fs.unlinkSync(tempConfigPath);
-        }
-    }
 }
 
 main().then((data) => {
