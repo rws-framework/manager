@@ -3,8 +3,8 @@ import { rwsShell } from "@rws-framework/console";
 import path from 'path';
 import fs from 'fs';
 
-import { BuilderType, BuildType } from '../types/run';
-import { RunnableConfig } from '../types/manager';
+import { BuilderType, BuildType, Environment } from '../types/run';
+import { RunnableConfig } from '../types/run';
 
 export interface IRunnerParams {
     appRootPath: string;
@@ -12,13 +12,43 @@ export interface IRunnerParams {
 }
 
 export class RWSRunner {
+    public static RUNNABLE_WORKSPACES: BuildType[] = [
+        BuildType.BACK,
+        BuildType.CLI
+    ];
+
     constructor(private params: IRunnerParams, private config: ConfigHelper){}
 
     async run(buildType: Exclude<BuildType, BuildType.ALL>): Promise<void>
     {        
-        const sectionConfig = this.config.getBuildTypeSection(buildType) as RunnableConfig;
+        const sectionConfig = this.config.getBuildTypeSection(buildType) as RunnableConfig;        
         const outFilePath = this.config.getOutputFilePath(this.params.appRootPath, buildType as Exclude<BuildType, BuildType.ALL>);
     
-        await rwsShell.runCommand(`node ${outFilePath}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
+        await rwsShell.runCommand(`${sectionConfig.environment} ${outFilePath}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
+    }   
+    
+    checkRunnable(sectionType: Exclude<BuildType, BuildType.ALL>)
+    {
+        RWSRunner.checkRunnable(this.config, sectionType);
+    }
+
+    isRunnable(buildType: Exclude<BuildType,  BuildType.ALL>): boolean
+    {
+        try{
+            RWSRunner.checkRunnable(this.config, buildType);
+
+            return true;
+        } catch(e: Error | any){
+            return false;
+        }
+    }
+
+    static checkRunnable(config: ConfigHelper, sectionType: Exclude<BuildType, BuildType.ALL>)
+    {
+        const sectionConfig = config.getBuildTypeSection(sectionType) as RunnableConfig;
+
+        if(!sectionConfig.environment || !Object.values(Environment).includes(sectionConfig.environment)){
+            throw new Error(`"${sectionType}" is not a runnable RWS workspace.`)
+        }
     }
 }

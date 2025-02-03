@@ -3,8 +3,8 @@ import path from 'path';
 import type { Configuration as WebpackConfig } from 'webpack';
 import webpack from 'webpack';
 import fs from 'fs';
-import { BuildersConfigurations, IBackendConfig, ICLIConfig, IFrontendConfig, IWebpackRWSConfig, RunnableConfig } from '../types/manager';
-import { BuildType } from '../types/run';
+import { BuildersConfigurations, IBackendConfig, ICLIConfig, IFrontendConfig, IWebpackRWSConfig } from '../types/manager';
+import { BuildType, Environment, RunnableConfig } from '../types/run';
 import { TSConfigHelper } from '../helper/TSConfigHelper';
 import { TSConfigContent } from '../types/tsc';
 import { ChildProcess, spawn } from 'child_process';
@@ -44,7 +44,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 this.buildType
             );            
 
-            const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {      
+            const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {   
+              environment: workspaceCfg.environment || Environment.NODE,     
               dev: cfg.dev || false,
               entrypoint: workspaceCfg.entrypoint || './src/index.ts',
               executionDir: workDir,
@@ -95,10 +96,14 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
 
 
         const cfg = this.config.get();
-        const workspaceCfg: IFrontendConfig & IBackendConfig & ICLIConfig | undefined = cfg.build[this.buildType];
+        const workspaceCfg = cfg.build[this.buildType] as Omit<
+            IFrontendConfig & 
+            IBackendConfig & 
+            ICLIConfig
+        , 'environment'> & { environment: Environment };
 
         if(!workspaceCfg){
-            throw new Error('[RWS] Workspace config error.');
+            throw new Error(`[RWS ERROR] The "${this.buildType}" workspace config error.`);
         }
 
         const workDir = path.resolve(this.appRootPath, workspaceCfg.workspaceDir);

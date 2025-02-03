@@ -1,5 +1,5 @@
 import { Configuration as WebpackConfig } from 'webpack';
-import { TSConfigContent } from '../types/tsc';
+import { RunnableConfig } from '../types/run';
 
 export interface BaseRWSConfig {    
     workspaceDir: string;       
@@ -33,9 +33,6 @@ export interface BuildConfig<T> {
 
 export interface IWebpackRWSConfig extends BuildConfig<WebpackConfig> {
 
-}
-
-export interface RunnableConfig extends BaseRWSConfig {
 }
 
 export interface IFrontendConfig extends BaseRWSConfig {

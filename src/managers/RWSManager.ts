@@ -1,12 +1,12 @@
 import Singleton from "../helper/_singleton";
 import { ConfigHelper } from "../helper/ConfigHelper";
-import { IManagerConfig, BaseRWSConfig, BuildersConfigurations, RunnableConfig } from "../types/manager";
+import { IManagerConfig, BaseRWSConfig, BuildersConfigurations } from "../types/manager";
 import path from 'path';
 import { BuilderFactory } from '../helper/BuilderFactory';
 import { RWSRunner } from '../models/RWSRunner';
 import fs from 'fs';
 import chalk from "chalk";
-import { BuilderType, BuildType, ManagerRunOptions } from "../types/run";
+import { BuilderType, BuildType, Environment, ManagerRunOptions, RunnableConfig } from "../types/run";
 
 
 
@@ -23,6 +23,11 @@ export class RWSManager extends Singleton {
 
         this.appRootPath = this.config.getAppRoot();        
 
+    }
+
+    private initCfg(type: Exclude<BuildType, BuildType.ALL>): void
+    {
+        this.setEnvironment(this.config.get(), type);
     }
 
     static async getRWSConfig(): Promise<IManagerConfig>
@@ -53,6 +58,7 @@ export class RWSManager extends Singleton {
                 }                
             }
         } else {
+            this.initCfg(type);
             if(!this.config.getBuildTypeSection(type)){
                 throw new Error(`No configuration for "${type}" workspace in rws.config.ts`)
             }
@@ -99,11 +105,30 @@ export class RWSManager extends Singleton {
             .build(isWatch);
     }
 
+    private setEnvironment(configObject: IManagerConfig, buildType: Exclude<BuildType, BuildType.ALL>): IManagerConfig
+    {
+        if(!RWSRunner.RUNNABLE_WORKSPACES.includes(buildType)){
+            return configObject;
+        }
+
+        const section = configObject.build[buildType] as RunnableConfig;
+
+        if(configObject.build[buildType]){
+            (configObject.build[buildType] as RunnableConfig).environment = section?.environment ?? Environment.NODE;
+        }    
+
+        return configObject;
+    }
+
     private async runWorkSpace(type: Exclude<BuildType, BuildType.ALL>){                     
         const runner = new RWSRunner({
             appRootPath: this.appRootPath,
             isVerbose: this.isVerbose
-        }, this.config);            
+        }, this.config);     
+         
+        this.initCfg(type);
+        runner.checkRunnable(type);
+        
         const outFile = this.config.getOutputFilePath(this.appRootPath, type);        
 
         const hasBinFile = !fs.existsSync(outFile);

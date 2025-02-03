@@ -1,3 +1,5 @@
+import { BaseRWSConfig } from "./manager";
+
 export enum BuildType {
     FRONT = 'front',
     CLI = 'cli',
@@ -16,3 +18,17 @@ export enum ManagerRunOptions {
     VERBOSE = 'verbose',
     RELOAD = 'reload'
 }
+
+export enum Environment {
+    NODE = 'node',
+    BUN = 'bunx',
+    DENO = 'deno'
+}
+
+export interface RunnableConfig extends BaseRWSConfig {
+    environment?: Environment;
+    processOptions?: {
+
+    }
+}
+
