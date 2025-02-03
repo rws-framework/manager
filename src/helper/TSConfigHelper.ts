@@ -16,7 +16,7 @@ export class TSConfigHelper extends Singleton {
         const execPath = cfg.getCLIExecPath();
         const buildSection =cfg.getBuildTypeSection(buildType);
         const basePath = path.join(appRootPath, buildSection.workspaceDir);
-        const baseTSConfig: TSConfigContent = JSON.parse(fs.readFileSync(path.join(appRootPath, 'node_modules', pkgPath, 'tsconfig.json'), 'utf-8'));
+        const baseTSConfig: TSConfigContent = JSON.parse(fs.readFileSync(path.resolve(appRootPath, 'node_modules', pkgPath, 'tsconfig.json'), 'utf-8'));
         const managerTSConfigContent: TSConfigContent = {        
             compilerOptions: {         
                 baseUrl: basePath,

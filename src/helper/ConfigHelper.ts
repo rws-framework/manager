@@ -6,6 +6,7 @@ import Singleton from './_singleton';
 export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Singleton {
     private data: IManagerConfig;
     private cliExecPath: string;
+    private appRootPath: string;
 
     private constructor(_DEFAULT_CONFIG?: T){
         super();    
@@ -14,7 +15,8 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
             this.data = _DEFAULT_CONFIG;
         }
 
-        this.cliExecPath = process.env.CLI_EXEC || '';
+        this.cliExecPath = process.env.RWS_CLI_EXEC || '';
+        this.appRootPath = process.env.RWS_APP_ROOT || '';
     }  
 
     get(): IManagerConfig
@@ -25,6 +27,11 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
     getCLIExecPath(): string
     {
         return this.cliExecPath;
+    }
+
+    getAppRoot(): string
+    {
+        return this.appRootPath;
     }
 
     getOutputFilePath(appRootPath: string, type: Exclude<BuildType, BuildType.ALL>){

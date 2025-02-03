@@ -25,34 +25,26 @@ export class RWSManager extends Singleton {
     private commandParams: string[] = [];
     private isVerbose: boolean = false;
 
-    private constructor(rwsConfig: IManagerConfig, appRootPath?: string, commandParams: string[] = []){
+    private constructor(rwsConfig: IManagerConfig, commandParams: string[] = []){
         super();
-
-        if(!appRootPath){
-            appRootPath = process.cwd();
-        }
-
-        this.appRootPath = appRootPath;        
-
 
         this.isVerbose = commandParams.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
         this.commandParams = commandParams.filter(arg => arg.indexOf('--verbose') == -1);
         this.config = ConfigHelper.create(rwsConfig);        
+
+        this.appRootPath = this.config.getAppRoot();        
+
     }
 
     static async getRWSConfig(): Promise<IManagerConfig>
     {
         //@ts-ignore
-        return (await import(`@/rws.config`)).default();
+        return (await import(`@rws-config`)).default();
     }
 
-    public static async start(appRootPath?: string, commandParams: string[] = []): Promise<RWSManager>
-    {
-        if(!appRootPath){
-            appRootPath = process.cwd();
-        }
-
-        return RWSManager.create(await this.getRWSConfig(), appRootPath, commandParams);
+    public static async start(commandParams: string[] = []): Promise<RWSManager>
+    {       
+        return RWSManager.create(await this.getRWSConfig(), commandParams);
     }
 
     public async build(type?: BuildType)
@@ -109,7 +101,7 @@ export class RWSManager extends Singleton {
         console.log(`${chalk.green('[RWS MANAGER]')} Building ${chalk.blue(type.toLowerCase())}`);
         
         await (BuilderFactory({ 
-            workspacePath:buildPath, 
+            workspacePath: buildPath, 
             appRootPath: this.appRootPath, 
             workspaceType: type, 
             builderType

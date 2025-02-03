@@ -12,8 +12,7 @@ export interface IBuilderFactoryParams {
 }
 
 export function BuilderFactory(params: IBuilderFactoryParams, config: ConfigHelper){
-    const { workspacePath, appRootPath, workspaceType, builderType } = params;
-
+    const { builderType } = params;
     const builderModel: any = (builders as { [key: string]: typeof RWSBuilder })[builderType];
     return new builderModel(params, config);
 }
