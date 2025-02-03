@@ -24,7 +24,8 @@
     }
   },
   "include": [
-    "src"
+    "src",
+    "exec/inc/ts"
   ],
   "exclude": [  
     "node_modules"  

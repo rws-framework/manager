@@ -5,6 +5,7 @@ import path from 'path';
 import { BuilderFactory } from '../helper/BuilderFactory';
 import { RWSRunner } from '../models/RWSRunner';
 import fs from 'fs';
+import chalk from "chalk";
 
 export enum BuildType {
     FRONT = 'front',
@@ -33,8 +34,9 @@ export class RWSManager extends Singleton {
 
         this.appRootPath = appRootPath;        
 
-        this.commandParams = commandParams.filter(arg => arg.indexOf('--verbose') == -1);
+
         this.isVerbose = commandParams.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
+        this.commandParams = commandParams.filter(arg => arg.indexOf('--verbose') == -1);
         this.config = ConfigHelper.create(rwsConfig);        
     }
 
@@ -53,20 +55,24 @@ export class RWSManager extends Singleton {
         return RWSManager.create(await this.getRWSConfig(), appRootPath, commandParams);
     }
 
-    public async build(type: BuildType = BuildType.ALL)
+    public async build(type?: BuildType)
     {
+        if(!type){
+            type = BuildType.ALL;
+        }
+        
         if(type === BuildType.ALL){
             // Iterate through all build types except 'all'
             const buildTypes = Object.values(BuildType)
                 .filter(t => t !== BuildType.ALL);
             
             for (const buildType of buildTypes) {
-                if(this.config.get(buildType as keyof IManagerConfig)){
+                if(this.config.getBuildTypeSection(buildType)){
                     await this.buildWorkSpace(buildType as Exclude<BuildType, BuildType.ALL>);
                 }                
             }
         } else {
-            if(!this.config.get(type as keyof IManagerConfig)){
+            if(!this.config.getBuildTypeSection(type)){
                 throw new Error(`No configuration for "${type}" workspace in rws.config.ts`)
             }
 
@@ -82,12 +88,12 @@ export class RWSManager extends Singleton {
                 .filter(t => t !== BuildType.ALL);
             
             for (const buildType of buildTypes) {
-                if(this.config.get(buildType as keyof IManagerConfig)){
+                if(this.config.getBuildTypeSection(buildType)){
                     await this.runWorkSpace(buildType as Exclude<BuildType, BuildType.ALL>);
                 }                
             }
         } else {
-            if(!this.config.get(type as keyof IManagerConfig)){
+            if(!this.config.getBuildTypeSection(type)){
                 throw new Error(`No configuration for "${type}" workspace in rws.config.ts`)
             }
 
@@ -97,8 +103,10 @@ export class RWSManager extends Singleton {
 
     private async buildWorkSpace(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType = BuilderType.WEBPACK){             
         const workspaceCfg = this.config.getBuildTypeSection(type);
-        const buildPath = path.join(this.appRootPath, workspaceCfg.entrypoint);
+        const buildPath = path.join(this.appRootPath, workspaceCfg.workspaceDir);
         const isWatch = this.commandParams.find(item => item === '--watch') !== undefined;
+
+        console.log(`${chalk.green('[RWS MANAGER]')} Building ${chalk.blue(type.toLowerCase())}`);
         
         await (BuilderFactory({ 
             workspacePath:buildPath, 
@@ -116,7 +124,10 @@ export class RWSManager extends Singleton {
             isVerbose: this.isVerbose
         }, this.config);
 
-        const outFile = path.join(this.appRootPath, (this.config.getBuildTypeSection(type) as RunnableConfig).customOutputFile);
+        const outputFileDir = (this.config.getBuildTypeSection(type) as RunnableConfig).outputDir || `./build`; 
+        const outputFileName = (this.config.getBuildTypeSection(type) as RunnableConfig).outputFileName || `${type.toLowerCase()}.rws.js`; 
+
+        const outFile = path.join(this.appRootPath, outputFileDir, outputFileName);
 
         if(!fs.existsSync(outFile)){
             await this.buildWorkSpace(type, BuilderType.WEBPACK);

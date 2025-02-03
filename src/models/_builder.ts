@@ -3,11 +3,12 @@ import { rwsShell } from "@rws-framework/console";
 import { BuilderType, BuildType } from '../managers/RWSManager';
 import chalk from 'chalk';
 import { IBuilderFactoryParams } from '../helper/BuilderFactory';
+import { BuildConfig } from '../types/manager';
 
 export abstract class RWSBuilder<C> {  
     protected workspacePath: string;
     protected appRootPath: string;
-    protected buildType: BuildType;
+    protected buildType: Exclude<BuildType, BuildType.ALL>;
     protected TYPE: BuilderType;
     
     private verbose: boolean;
@@ -26,7 +27,7 @@ export abstract class RWSBuilder<C> {
 
     protected async runCommand(command: string, cwd?: string | null, silent?: boolean, env?: any)
     {
-        return rwsShell.runCommand(command, cwd, silent, env ? { env } : null);
+        return rwsShell.runCommand(command, cwd, silent, env ? { env } : {});
     }
 
     protected log(msg: string, overVerbose: boolean = false){
@@ -51,5 +52,9 @@ export abstract class RWSBuilder<C> {
 
     protected produceParamString(params: string[]) {
         return params.length ? ` ${params.join(' ')}` : '';
+    }
+
+    protected async execute(buildCfg: C, callback: (buildCfg: C) => Promise<void> = async (buildCfg) => void 0): Promise<void>{
+        throw new Error('Declare execute() method.')
     }
 }

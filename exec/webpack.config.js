@@ -2,6 +2,7 @@ const path = require('path');
 const chalk = require('chalk');
 const webpack = require('webpack');
 const { rwsPath } = require('@rws-framework/console');
+const { webpackInceptionExternals  } = require('./inc/js/inception_externals');
 // Get CLI arguments
 const args = process.argv.slice(2);
 const fs = require('fs');
@@ -88,16 +89,19 @@ const cfgExport = {
 
 };
 
-cfgExport.externals = {
-  '@nestjs/common': 'commonjs @nestjs/common',
-  '@nestjs/core': 'commonjs @nestjs/core',  
-  '@nestjs/config': 'commonjs @nestjs/config',  
-  '@anthropic-ai/sdk': 'commonjs @anthropic-ai/sdk',
-  '@zip.js/zip.js': 'commonjs @zip.js/zip.js',
-  'mongodb-client-encryption': 'commonjs mongodb-client-encryption',
-  'uuid': 'commonjs uuid',
-  'source-map-support': 'commonjs source-map-support'
-};
+cfgExport.externals = [
+  webpackInceptionExternals,
+  {
+      '@nestjs/common': 'commonjs @nestjs/common',
+      '@nestjs/core': 'commonjs @nestjs/core',  
+      '@nestjs/config': 'commonjs @nestjs/config',  
+      '@anthropic-ai/sdk': 'commonjs @anthropic-ai/sdk',
+      '@zip.js/zip.js': 'commonjs @zip.js/zip.js',
+      'mongodb-client-encryption': 'commonjs mongodb-client-encryption',
+      'uuid': 'commonjs uuid',
+      'source-map-support': 'commonjs source-map-support'
+  }
+];
 
 cfgExport.plugins.push(
   new webpack.BannerPlugin({

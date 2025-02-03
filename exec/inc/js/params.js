@@ -6,7 +6,7 @@ function getParams(){
     
     const appRoot = process.cwd();
     const rwsCliConfigDir = path.resolve(appRoot, 'node_modules', '.rws', 'cli');    
-    const currentCwd = path.resolve(__dirname, '..');
+    const currentCwd = path.resolve(__dirname, '..', '..');
     const isVerbose = params.find(arg => arg.indexOf('--verbose') > -1) !== null;
 
     return {

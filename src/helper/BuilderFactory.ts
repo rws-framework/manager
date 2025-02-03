@@ -7,7 +7,7 @@ import { ConfigHelper } from './ConfigHelper';
 export interface IBuilderFactoryParams {
     workspacePath:string;
     appRootPath: string;
-    workspaceType: BuildType;
+    workspaceType: Exclude<BuildType, BuildType.ALL>;
     builderType: BuilderType;
 }
 

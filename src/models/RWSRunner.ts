@@ -17,8 +17,8 @@ export class RWSRunner {
     async run(buildType: Exclude<BuildType, BuildType.ALL>): Promise<void>
     {        
         const sectionConfig = this.config.getBuildTypeSection(buildType) as RunnableConfig;
-        const outFile = path.join(this.params.appRootPath, sectionConfig.customOutputFile);
-
-        await rwsShell.runCommand(`node ${outFile}`, path.join(this.params.appRootPath, sectionConfig.entrypoint));
+        const outFilePath = this.config.getOutputFilePath(this.params.appRootPath, buildType as Exclude<BuildType, BuildType.ALL>);
+    
+        await rwsShell.runCommand(`node ${outFilePath}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
     }
 }

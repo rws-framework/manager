@@ -32,19 +32,15 @@ export function getCommandContext(commands: CommandsType): CommandContext
     }
 
     let secondaryCommand: string | null = null;
-    let commandParams: string[] = [];
+    let commandParams: string[] = [];    
 
     if(commands[primaryCommand] !== null && Object.keys(commands[primaryCommand] as object).includes(args[1])){
         secondaryCommand = args[1];
-        commandParams = args.slice(2);
-    }else if(commands[primaryCommand] == null){
-        commandParams = args.slice(1);
-    } else {
-        throw new Error(`RWS Manager "${primaryCommand}" doesn't have "${args[1]} subcommand".\n
-        Try one of: \n          -${chalk.yellow(Object.keys(commands[primaryCommand]).join('\n          -'))}
-        `)
+        commandParams = [...args].slice(2);
+    }else{
+        commandParams = [...args].slice(1);
     }
-
+    
     return {
         primaryCommand,
         secondaryCommand,

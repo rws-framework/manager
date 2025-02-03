@@ -1,38 +1,6 @@
-const webpack = require('webpack');
-const webpackCfg = require('../webpack.config');
-const chalk = require('chalk');
 const fs = require('fs');
-const { getCachedPath } = require('./cache');
 const path = require('path');
 const { rwsShell } = require('@rws-framework/console');
-
-async function buildCLI(appRoot, rwsCliConfigDir, isVerbose){
-    console.log(chalk.yellow('[RWS CLI] Building CLI client...'));
-
-        const cacheTypes = ['paths', 'checksum'];
-
-        for(const type of cacheTypes){
-            if(fs.existsSync(getCachedPath(type, rwsCliConfigDir))){
-                fs.unlinkSync(getCachedPath(type, rwsCliConfigDir));
-            }
-        }      
-        
-        const tscBuild = await tsc(path.join(__dirname, '..'), appRoot, isVerbose);
-       
-        try {
-            await  new Promise((resolve) => {
-                webpack(webpackCfg).run((webpackBuildData) => {
-                    resolve();
-                });
-            });
-        } catch (e) {
-            throw new Error(`Webpack build error: ${e.message}\n${e.stack}`)
-        }
-
-        tscBuild.remove();
-
-        console.log(chalk.green('[RWS CLI] CLI client generated'));
-}
 
 async function tsc(execPath, appRootPath, isVerbose = false, extendedConfig = {})
 {      
@@ -64,7 +32,7 @@ function enableTempCfg(execPath, appRootPath, cfg = {}){
             path.relative(execPath, path.join(appRootPath, 'rws.config.ts'))
         ],
         exclude: [
-            path.relative(execPath, path.join(appRootPath, 'node_modules'), path.join(appRootPath, 'build'))
+            path.relative(execPath, path.join(appRootPath, 'node_modules'))
         ],
         ...cfg
     };    
@@ -86,4 +54,4 @@ function enableTempCfg(execPath, appRootPath, cfg = {}){
     }
 }
 
-module.exports = { buildCLI, tsc, enableTempCfg }
+module.exports = {tsc, enableTempCfg};
