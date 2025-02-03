@@ -3,9 +3,6 @@ const chalk = require('chalk');
 const webpack = require('webpack');
 const { rwsPath } = require('@rws-framework/console');
 const { webpackInceptionExternals  } = require('./inc/js/inception_externals');
-// Get CLI arguments
-const args = process.argv.slice(2);
-const fs = require('fs');
 const appRootPath = process.env.APP_ROOT || process.cwd();
 
 const internalCwd = process.cwd()

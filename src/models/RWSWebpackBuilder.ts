@@ -28,7 +28,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             this.log(`Building...`);  
 
             let rwsBuilderPath: string | null = null;
-            type RWSBuilderType = ((buildParams: WorkspaceBuildParams, workspaceDir: string) => Promise<WebpackConfig>) | undefined;
+            type RWSBuilderType = ((appRoot: string, buildParams: WorkspaceBuildParams, workspaceDir: string) => Promise<WebpackConfig>) | undefined;
             let rwsBuilder: RWSBuilderType;
             let pkgPath: string = '';
 
@@ -63,7 +63,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 this.buildType
             );            
 
-            const buildCfg: WebpackConfig = await rwsBuilder({
+            const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {      
               dev: cfg.dev || false,
               entrypoint: workspaceCfg.entrypoint || './src/index.ts',
               executionDir: workDir,
