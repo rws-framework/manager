@@ -3,7 +3,7 @@ import { rwsShell } from "@rws-framework/console";
 import path from 'path';
 import fs from 'fs';
 
-import { BuilderType, BuildType } from '../managers/RWSManager';
+import { BuilderType, BuildType } from '../types/run';
 import { RunnableConfig } from '../types/manager';
 
 export interface IRunnerParams {

@@ -1,5 +1,5 @@
 import path from 'path';
-import { BuilderType, BuildType } from '../managers/RWSManager';
+import { BuilderType, BuildType } from '../types/run';
 import { BuildersConfigurations, IManagerConfig, BuildConfig, BaseRWSConfig, RunnableConfig, IRWSWorkspaces, IFrontendConfig, IBackendConfig, ICLIConfig } from '../types/manager';
 import Singleton from './_singleton';
 

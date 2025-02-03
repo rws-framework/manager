@@ -3,15 +3,16 @@ import 'reflect-metadata';
 import chalk from 'chalk';
 import { getCommandContext } from './_args';
 import commands from './commands';
-import { BuildType, RWSManager } from '../../src/managers/RWSManager';
+import { RWSManager } from '../../src/managers/RWSManager';
+import { BuildType } from '../../src/types/run';
 
 
 async function main(): Promise<void>
 {  
   
-  const { primaryCommand, secondaryCommand, commandParams, isAfterRebuild } = getCommandContext(commands);
+  const { primaryCommand, secondaryCommand, commandParams, commandOptions, isAfterRebuild } = getCommandContext(commands);
 
-  const manager = await RWSManager.start(commandParams);
+  const manager = await RWSManager.start(commandParams, commandOptions);
 
   if(primaryCommand === 'build'){
     await manager.build(secondaryCommand as BuildType);

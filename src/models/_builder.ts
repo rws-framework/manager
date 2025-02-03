@@ -1,6 +1,6 @@
 import { ConfigHelper } from '../helper/ConfigHelper';
 import { rwsShell } from "@rws-framework/console";
-import { BuilderType, BuildType } from '../managers/RWSManager';
+import { BuilderType, BuildType } from '../types/run';
 import chalk from 'chalk';
 import { IBuilderFactoryParams } from '../helper/BuilderFactory';
 import { BuildConfig } from '../types/manager';
@@ -54,7 +54,7 @@ export abstract class RWSBuilder<C> {
         return params.length ? ` ${params.join(' ')}` : '';
     }
 
-    protected async execute(buildCfg: C, callback: (buildCfg: C) => Promise<void> = async (buildCfg) => void 0): Promise<void>{
+    protected async execute(buildCfg: C, watch: boolean = false, callback: (buildCfg: C) => Promise<void> = async (buildCfg) => void 0): Promise<void>{
         throw new Error('Declare execute() method.')
     }
 }

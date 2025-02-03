@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { ConfigHelper } from './ConfigHelper';
-import { BuildType } from '../managers/RWSManager';
+import { BuildType } from '../types/run';
 import Singleton from './_singleton';
 
 import { TSConfigContent } from '../types/tsc';

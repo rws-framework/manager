@@ -1,5 +1,4 @@
-import chalk from 'chalk';
-
+import { ManagerRunOptions } from '../../src/types/run';
 type SubCommandParams = object;
 export type CommandsType = { [key: string]: { [subKey: string]: SubCommandParams | null } | null };
 
@@ -7,17 +6,28 @@ export type CommandContext = {
     primaryCommand: string,
     secondaryCommand: string | null,
     commandParams: string[],
+    commandOptions: string[],
+    cliExecPath: string,
     isAfterRebuild: boolean;
     isVerbose: boolean;
 }
 
 export function getCommandContext(commands: CommandsType): CommandContext
 {    
-    const argv = [...process.argv].slice(2);
-    const args: string[] = argv.filter(cmd => cmd !== '--rebuild' && cmd !== '--verbose');    
+    const argv = [...process.argv]
+        .slice(2)
+        .filter(cmd => (
+                cmd.startsWith('--') && 
+                Object.values(ManagerRunOptions).includes(cmd.replace('--', '') as ManagerRunOptions)
+            ) || !cmd.startsWith('--')
+        );
+
+    const args: string[] = argv.filter(cmd => !cmd.startsWith('--'));
+    const commandOptions: string[] = argv.filter(cmd => cmd.startsWith('--'));
+
     const cliExecPath: string = args.pop();   
-    const isAfterRebuild: boolean = argv.find(cmd => cmd == '--rebuild') !== null;
-    const isVerbose: boolean = argv.find(cmd => cmd == '--verbose') !== null;
+    const isAfterRebuild: boolean = argv.find(cmd => cmd == `--${ManagerRunOptions.RELOAD}`) !== null;
+    const isVerbose: boolean = argv.find(cmd => cmd == `--${ManagerRunOptions.VERBOSE}`) !== null;
 
     if(args.length == 0) {
         throw new Error('RWS Manager needs a command.')
@@ -47,6 +57,8 @@ export function getCommandContext(commands: CommandsType): CommandContext
         primaryCommand,
         secondaryCommand,
         commandParams,
+        commandOptions,
+        cliExecPath,
         isAfterRebuild,
         isVerbose
     }

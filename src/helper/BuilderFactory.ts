@@ -1,4 +1,4 @@
-import { BuildType, BuilderType } from '../managers/RWSManager';
+import { BuildType, BuilderType } from '../types/run';
 import builders from '../models';
 import { RWSBuilder } from '../models/_builder';
 import { ConfigHelper } from './ConfigHelper';

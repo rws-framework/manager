@@ -6,30 +6,19 @@ import { BuilderFactory } from '../helper/BuilderFactory';
 import { RWSRunner } from '../models/RWSRunner';
 import fs from 'fs';
 import chalk from "chalk";
+import { BuilderType, BuildType, ManagerRunOptions } from "../types/run";
 
-export enum BuildType {
-    FRONT = 'front',
-    CLI = 'cli',
-    BACK = 'back',  
-    ALL = 'all'
-}
 
-export enum BuilderType {
-    WEBPACK = 'webpack',
-    VITE = 'vite'    
-}
 
 export class RWSManager extends Singleton {
     private config: ConfigHelper<IManagerConfig>;
-    private appRootPath: string;
-    private commandParams: string[] = [];
+    private appRootPath: string;    
     private isVerbose: boolean = false;
 
-    private constructor(rwsConfig: IManagerConfig, commandParams: string[] = []){
+    private constructor(rwsConfig: IManagerConfig, private commandParams: string[] = [], private commandOptions: string[] = []){
         super();
 
-        this.isVerbose = commandParams.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
-        this.commandParams = commandParams.filter(arg => arg.indexOf('--verbose') == -1);
+        this.isVerbose = this.commandOptions.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
         this.config = ConfigHelper.create(rwsConfig);        
 
         this.appRootPath = this.config.getAppRoot();        
@@ -42,9 +31,9 @@ export class RWSManager extends Singleton {
         return (await import(`@rws-config`)).default();
     }
 
-    public static async start(commandParams: string[] = []): Promise<RWSManager>
+    public static async start(commandParams: string[] = [], options: string[]): Promise<RWSManager>
     {       
-        return RWSManager.create(await this.getRWSConfig(), commandParams);
+        return RWSManager.create(await this.getRWSConfig(), commandParams, options);
     }
 
     public async build(type?: BuildType)
@@ -96,9 +85,9 @@ export class RWSManager extends Singleton {
     private async buildWorkSpace(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType = BuilderType.WEBPACK){             
         const workspaceCfg = this.config.getBuildTypeSection(type);
         const buildPath = path.join(this.appRootPath, workspaceCfg.workspaceDir);
-        const isWatch = this.commandParams.find(item => item === '--watch') !== undefined;
+        const isWatch = this.commandOptions.find(item => item === '--watch') !== undefined;
 
-        console.log(`${chalk.green('[RWS MANAGER]')} Building ${chalk.blue(type.toLowerCase())}`);
+        this.log(`${isWatch ? 'Watching' : 'Building'} ${chalk.blue(type.toLowerCase())}`);
         
         await (BuilderFactory({ 
             workspacePath: buildPath, 
@@ -114,22 +103,44 @@ export class RWSManager extends Singleton {
         const runner = new RWSRunner({
             appRootPath: this.appRootPath,
             isVerbose: this.isVerbose
-        }, this.config);
+        }, this.config);            
+        const outFile = this.config.getOutputFilePath(this.appRootPath, type);        
 
-        const outputFileDir = (this.config.getBuildTypeSection(type) as RunnableConfig).outputDir || `./build`; 
-        const outputFileName = (this.config.getBuildTypeSection(type) as RunnableConfig).outputFileName || `${type.toLowerCase()}.rws.js`; 
+        const hasBinFile = !fs.existsSync(outFile);
+        let forceBuild: boolean = hasBinFile;        
 
-        const outFile = path.join(this.appRootPath, outputFileDir, outputFileName);
+        if(!forceBuild && this.hasOption(ManagerRunOptions.BUILD)){
+            forceBuild = true;
+        }
 
-        if(!fs.existsSync(outFile)){
+        if(forceBuild){
+            if(hasBinFile){
+                this.log(chalk.yellow('No runfile file detected.') + ' Building output runfile...')
+            }
+
+            if(this.hasOption(ManagerRunOptions.BUILD)){
+                this.log(chalk.yellow(`--${ManagerRunOptions.BUILD} option detected.`) + ' Reloading output runfile build...');
+            }
+
             await this.buildWorkSpace(type, BuilderType.WEBPACK);
         }
+
 
         await runner.run(type);
     }
 
-    getCommandParams()
+    getCommandParams(): string[]
     {
         return this.commandParams;
+    }
+
+    hasOption(option: ManagerRunOptions): boolean
+    {
+        return this.commandOptions.find(item => item === `--${option}`) !== undefined;
+    }
+
+    private log(txt: string): void
+    {
+        console.log(`${chalk.green('[RWS MANAGER]')} ${txt}`)
     }
 }
