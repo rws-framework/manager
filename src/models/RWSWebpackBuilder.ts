@@ -142,6 +142,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async execute(buildCfg: WebpackConfig, watch: boolean = false): Promise<void> {
+        
         await new Promise<void>( async (resolve, reject) => {
             const compiler = webpack(buildCfg);            
 

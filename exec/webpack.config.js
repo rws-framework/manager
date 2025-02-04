@@ -50,6 +50,7 @@ const cfgExport = {
             loader: 'ts-loader',
             options: {
               transpileOnly: true,
+              allowTsInNodeModules: true,
               configFile: path.resolve(__dirname, 'tsconfig.json'),
               compilerOptions: {
                 outDir: path.resolve(internalCwd, 'build'),       

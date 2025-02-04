@@ -3,31 +3,9 @@ import path from 'path';
 import { ConfigHelper } from './ConfigHelper';
 import { BuildType } from '../types/run';
 import Singleton from './_singleton';
-import { ScriptTarget, ModuleKind } from 'typescript';
-import { TSConfigContent } from '../types/tsc';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { rwsPath } from '@rws-framework/console';
+import { PackageJson, TSConfigContent, TSConfigControls } from '../types/tsc';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-export interface TSConfigData {
-    config: TSConfigContent
-    path: string
-    fileName: string
-    fileCreated: boolean
-    includes: Pathkeeper[]
-    excludes: Pathkeeper[]    
-}
-
-export interface TSConfigControls {
-    isToRemove: boolean;
-    tsConfig(pkgPath: string, fileCreation?: boolean, isToRemove?: boolean): TSConfigData
-    remove(): void
-}
-
-class Pathkeeper {
+export class Pathkeeper {
     constructor(private basePath: string, private filePath: string){};
 
     rel(): string
@@ -79,8 +57,17 @@ export class TSConfigHelper extends Singleton {
             const cliExecPath = cfg.getCLIExecPath();
             const basePath = '.';
             const baseTsPath = path.join(pkgPath, 'tsconfig.json');
-            const baseTSConfig: TSConfigContent = JSON.parse(fs.readFileSync(baseTsPath, 'utf-8'));        
-    
+            const baseTSConfig: TSConfigContent = JSON.parse(fs.readFileSync(baseTsPath, 'utf-8'));  
+                                
+            const mainModuleDeps = _self.scanDeps(nodeModulesPath, path.join(wrkDir, 'package.json'), true);
+
+            if(wrkDir !== appRootPath){
+                console.log({ mainModuleDeps });                
+                const appRootModuleDeps = _self.scanDeps(nodeModulesPath, path.join(appRootPath, 'package.json'), true);
+                console.log({ appRootModuleDeps });                
+
+            }
+
             const managerTSConfigContent: TSConfigContent = {        
                 compilerOptions: {  
                     ...baseTSConfig.compilerOptions,       
@@ -90,17 +77,10 @@ export class TSConfigHelper extends Singleton {
                     }
                 }
             };
+            
+            const deps: Set<string> = _self.scanDeps(nodeModulesPath, path.join(pkgPath, 'package.json'));
 
-            const jsonPackageFilePath = path.join(pkgPath, 'package.json');
-            const packageJson: { 
-                dependencies: {[packageName: string] : string}, 
-                devDependencies: {[packageName: string] : string} 
-            } = JSON.parse(fs.readFileSync(jsonPackageFilePath, 'utf-8'));
-
-            const deps: Set<string> = new Set([
-                ...Object.keys(packageJson.dependencies).filter(packageName => packageName.startsWith('@rws-framework')),
-                ...Object.keys(packageJson.devDependencies).filter(packageName => packageName.startsWith('@rws-framework'))
-            ]);    
+            console.log({deps});
 
             let includes: Pathkeeper[] = [
                 new Pathkeeper(wrkDir, path.join(wrkDir, 'src')),
@@ -141,6 +121,40 @@ export class TSConfigHelper extends Singleton {
         controlSet.remove = remove.bind(controlSet);
         
         return controlSet as TSConfigControls;
+    }
+
+    getPackageJson(jsonPath: string): PackageJson 
+    {   
+        return JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+    }
+
+    private scanDeps(nodeModulesPath: string, pkgJsonPath: string, nonRwsScan = false): Set<string>
+    {        
+        const packageJson = this.getPackageJson(pkgJsonPath);
+        
+
+        if(!packageJson._rws && !nonRwsScan){
+            return new Set<string>();
+        }
+
+        const deps: Set<string> = new Set([
+            ...(Object.keys(packageJson.dependencies ?? {}).filter(packageName => packageName.startsWith('@rws-framework') && this.isRWSPackage(nodeModulesPath, packageName))),
+            ...(Object.keys(packageJson.devDependencies ?? {}).filter(packageName => packageName.startsWith('@rws-framework') && this.isRWSPackage(nodeModulesPath, packageName)))
+        ]);    
+
+        let subDependencies = new Set<string>();
+
+        for(const subDep of deps){
+            subDependencies = new Set<string>([...subDependencies, ...this.scanDeps(nodeModulesPath, path.join(nodeModulesPath, subDep, 'package.json'))]);
+        }
+
+        return new Set<string>([...deps, ...subDependencies]);
+    }
+
+    private isRWSPackage(nodeModulesPath: string, packageName: string): boolean {
+        const packageJson = this.getPackageJson(path.join(nodeModulesPath, packageName, 'package.json'));
+
+        return packageJson?._rws === true;
     }
 
     private processDepItem(item: string, nodeModulesPath: string, packagePath: string): string

@@ -93,7 +93,7 @@ export class RWSManager extends Singleton {
         const buildPath = path.join(this.appRootPath, workspaceCfg.workspaceDir);
         const isWatch = this.commandOptions.find(item => item === '--watch') !== undefined;
 
-        this.log(`${isWatch ? 'Watching' : 'Building'} ${chalk.blue(type.toLowerCase())}`);
+        this.log(`${isWatch ? 'Watching' : 'Building'} ${chalk.blue(type.toLowerCase())}`);        
         
         await (BuilderFactory.bind(this)({ 
             workspacePath: buildPath, 
