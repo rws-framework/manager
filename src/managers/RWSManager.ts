@@ -95,7 +95,7 @@ export class RWSManager extends Singleton {
 
         this.log(`${isWatch ? 'Watching' : 'Building'} ${chalk.blue(type.toLowerCase())}`);
         
-        await (BuilderFactory({ 
+        await (BuilderFactory.bind(this)({ 
             workspacePath: buildPath, 
             appRootPath: this.appRootPath, 
             workspaceType: type, 

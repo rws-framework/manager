@@ -3,7 +3,7 @@ import { rwsShell } from "@rws-framework/console";
 import path from 'path';
 import fs from 'fs';
 
-import { BuilderType, BuildType, Environment } from '../types/run';
+import {  BuildType, Environment } from '../types/run';
 import { RunnableConfig } from '../types/run';
 
 export interface IRunnerParams {
@@ -27,9 +27,11 @@ export class RWSRunner {
         await rwsShell.runCommand(`${sectionConfig.environment} ${outFilePath}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
     }   
     
-    checkRunnable(sectionType: Exclude<BuildType, BuildType.ALL>)
+    checkRunnable(sectionType: Exclude<BuildType, BuildType.ALL>): RWSRunner
     {
         RWSRunner.checkRunnable(this.config, sectionType);
+
+        return this;
     }
 
     isRunnable(buildType: Exclude<BuildType,  BuildType.ALL>): boolean

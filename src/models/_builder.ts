@@ -4,6 +4,7 @@ import { BuilderType, BuildType } from '../types/run';
 import chalk from 'chalk';
 import { IBuilderFactoryParams } from '../helper/BuilderFactory';
 import { BuildConfig } from '../types/manager';
+import { RWSManager } from '../managers/RWSManager';
 
 export abstract class RWSBuilder<C> {  
     protected workspacePath: string;
@@ -13,7 +14,7 @@ export abstract class RWSBuilder<C> {
     
     private verbose: boolean;
 
-    constructor(params: IBuilderFactoryParams, protected config: ConfigHelper){
+    constructor(params: IBuilderFactoryParams, protected config: ConfigHelper, protected theManager: RWSManager){
         this.workspacePath = params.workspacePath;
         this.appRootPath = params.appRootPath;
         this.buildType = params.workspaceType;

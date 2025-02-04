@@ -4,10 +4,12 @@ import type { Configuration as WebpackConfig } from 'webpack';
 import webpack from 'webpack';
 import fs from 'fs';
 import { BuildersConfigurations, IBackendConfig, ICLIConfig, IFrontendConfig, IWebpackRWSConfig } from '../types/manager';
-import { BuildType, Environment, RunnableConfig } from '../types/run';
-import { TSConfigHelper } from '../helper/TSConfigHelper';
+import { BuildType, Environment, ManagerRunOptions, RunnableConfig } from '../types/run';
+import { TSConfigHelper, TSConfigData } from '../helper/TSConfigHelper';
 import { TSConfigContent } from '../types/tsc';
 import { ChildProcess, spawn } from 'child_process';
+import { RWSRunner } from './RWSRunner';
+import chalk from 'chalk';
 
 
 export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
@@ -37,9 +39,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 pkgPath
             } = await this.getBuildData();
 
-            const tsConfig: TSConfigContent = TSConfigHelper.create<TSConfigHelper>().build(                
-                this.appRootPath,
-                pkgPath,
+            const tsConfigControls = TSConfigHelper.create<TSConfigHelper>().build(                
+                this.appRootPath,                
                 this.config,
                 this.buildType
             );            
@@ -51,7 +52,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               executionDir: workDir,
               outputDir:  workspaceCfg?.outputDir || './build',
               outputFileName: workspaceCfg?.outputFileName || `${this.buildType.toLowerCase()}.rws.js`,
-              tsConfig,
+              tsConfig: tsConfigControls.tsConfig,
               publicDir:  workspaceCfg?.publicDir,                               
              
               //front
@@ -68,6 +69,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
      
             await this.execute(buildCfg, watch);
 
+            tsConfigControls.remove();
+
             this.log(`Build complete.`);
         }else{
            
@@ -75,7 +78,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async getBuildData() {
-        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: TSConfigContent; };
+        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData; };
         type RWSBuilderType = ((appRoot: string, buildParams: WorkspaceBuildParams, workspaceDir: string) => Promise<WebpackConfig>) | undefined;
 
         let rwsBuilder: RWSBuilderType;
@@ -139,8 +142,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async execute(buildCfg: WebpackConfig, watch: boolean = false): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const compiler = webpack(buildCfg);
+        await new Promise<void>( async (resolve, reject) => {
+            const compiler = webpack(buildCfg);            
 
             if (watch) {
                 let isFirstRun = true;
@@ -181,10 +184,28 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                             console.error(cerr);
                             return;
                         }
+
+                        // if(existed){
+                        //     fs.unlinkSync(tsConfigPath);
+                        // }
+
                         resolve();
                     });
                 });
             }
         });
+
+        if(this.theManager.hasOption(ManagerRunOptions.RUN)){
+            this.log(chalk.yellow(`--${ManagerRunOptions.RUN} option detected.`) + ' starting runfile...');
+            
+            const runner = new RWSRunner({
+                appRootPath: this.appRootPath,
+                isVerbose: this.isVerbose()
+            }, this.config);
+
+            runner.checkRunnable(this.buildType).run(this.buildType);
+        }
+
+        return;
     }
 }

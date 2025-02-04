@@ -16,7 +16,8 @@ export enum ManagerRunOptions {
     BUILD = 'build',
     WATCH = 'watch',
     VERBOSE = 'verbose',
-    RELOAD = 'reload'
+    RELOAD = 'reload',
+    RUN = 'run'
 }
 
 export enum Environment {
