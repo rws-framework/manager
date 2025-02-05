@@ -14,7 +14,11 @@ const commands: CommandsType = {
     db: {
       init: null
     },
-    help: null
+    generate: {
+      tsconfig: null
+    },
+    help: null,
+    cli: null
 }
 
 export default commands;

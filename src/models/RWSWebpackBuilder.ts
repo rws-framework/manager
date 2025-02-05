@@ -1,12 +1,13 @@
 import { RWSBuilder } from './_builder';
 import path from 'path';
-import type { Configuration as WebpackConfig } from 'webpack';
+import type { Compiler, Stats, Configuration as WebpackConfig } from 'webpack';
 import webpack from 'webpack';
 import fs from 'fs';
 import { BuildersConfigurations, IBackendConfig, ICLIConfig, IFrontendConfig, IWebpackRWSConfig } from '../types/manager';
 import { BuildType, Environment, ManagerRunOptions, RunnableConfig } from '../types/run';
-import { TSConfigHelper, TSConfigData } from '../helper/TSConfigHelper';
-import { TSConfigContent } from '../types/tsc';
+import { TSConfigData } from '../types/tsc';
+
+import { TSConfigHelper } from '../helper/TSConfigHelper';
 import { ChildProcess, spawn } from 'child_process';
 import { RWSRunner } from './RWSRunner';
 import chalk from 'chalk';
@@ -52,7 +53,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               executionDir: workDir,
               outputDir:  workspaceCfg?.outputDir || './build',
               outputFileName: workspaceCfg?.outputFileName || `${this.buildType.toLowerCase()}.rws.js`,
-              tsConfig: tsConfigControls.tsConfig,
+              tsConfig: tsConfigControls.tsConfig as any,
               publicDir:  workspaceCfg?.publicDir,                               
              
               //front
@@ -142,60 +143,18 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async execute(buildCfg: WebpackConfig, watch: boolean = false): Promise<void> {
-        
-        await new Promise<void>( async (resolve, reject) => {
-            const compiler = webpack(buildCfg);            
+        const _self = this;
 
+        await new Promise<void>( async function (resolve, reject){
+            const compiler = webpack(buildCfg);                
+                
             if (watch) {
-                let isFirstRun = true;
-                compiler.watch({}, async (err, stats) => {
-                    if (err) {
-                        console.error(err);
-                        return;
-                    }
-
-                    if (stats?.hasErrors()) {
-                        console.error(stats.toString({ colors: true }));
-                        return;
-                    }
-
-                    console.log(stats?.toString({ colors: true }));
-
-                    try {
-                        await this.restartServer();
-                        if (isFirstRun) {
-                            isFirstRun = false;
-                            resolve();
-                        }
-                    } catch (error) {
-                        console.error('Error restarting server:', error);
-                    }
-                });
+                _self.compileWatch(compiler, {resolve, reject});
             } else {
-                compiler.run((err, stats) => {
-                    if (err) {
-                        reject(err);
-                        console.error(err);
-                        return;
-                    }
-
-                    compiler.close((cerr) => {
-                        if (cerr) {
-                            reject(cerr);
-                            console.error(cerr);
-                            return;
-                        }
-
-                        // if(existed){
-                        //     fs.unlinkSync(tsConfigPath);
-                        // }
-
-                        resolve();
-                    });
-                });
+                _self.compile(compiler, {resolve, reject});
             }
         });
-
+    
         if(this.theManager.hasOption(ManagerRunOptions.RUN)){
             this.log(chalk.yellow(`--${ManagerRunOptions.RUN} option detected.`) + ' starting runfile...');
             
@@ -203,10 +162,91 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 appRootPath: this.appRootPath,
                 isVerbose: this.isVerbose()
             }, this.config);
-
-            runner.checkRunnable(this.buildType).run(this.buildType);
+    
+            if (RWSRunner.RUNNABLE_WORKSPACES.includes(this.buildType)) {
+                runner.checkRunnable(this.buildType).run(this.buildType);
+            }
         }
-
+    
         return;
     }
+
+    private compileWatch(compiler: Compiler, { resolve, reject } : { 
+        resolve: () => void, 
+        reject: (err: Error | null) => void
+     })
+    {
+       
+        const _self = this;
+        compiler.watch({}, async function (err: Error | null, stats?: Stats) {
+            const success = await _self.handleBuildResult(reject, err, stats, true);
+            if (success) {                
+                resolve();
+            }
+        });
+    }
+
+    private compile(compiler: Compiler, { resolve, reject } : { 
+        resolve: () => void, 
+        reject: (err: Error | null) => void
+     })
+    {
+        let isFirstRun = true;
+        compiler.run(async (err, stats) => {
+            const success = await this.handleBuildResult(reject,err, stats);
+            
+            if (isFirstRun && success && this.buildType === BuildType.FRONT) {
+                isFirstRun = false;  
+                resolve()             
+            }else{
+                compiler.close((cerr) => {
+                    if (cerr) {
+                        reject(cerr);
+                        console.error(cerr);
+                        return;
+                    }
+                    resolve();
+                });
+            }
+        });
+    }
+
+    private async handleBuildResult(reject: (err: Error | null) => void, err: Error | null, stats: webpack.Stats | undefined, enableServerRestart: boolean = false) {
+        if (err) {
+            console.error(err);
+            reject(err); // Add reject here
+            return;
+        }
+
+        if (stats?.hasErrors()) {
+            const output = stats.toString({ 
+                colors: true,
+                chunks: false,  // Make the build much less verbose
+                modules: false,
+                assets: true,
+                errorDetails: true // Display error details
+            });
+            console.error(output);
+            reject(new Error('Build failed with errors')); // Add reject here
+            return;
+        }
+
+        console.log(stats?.toString({ 
+            colors: true,
+            chunks: false,
+            modules: false,
+            assets: true
+        }));        
+
+        try {
+            if (enableServerRestart) {
+                await this.restartServer();
+            }
+            return true; // Indicate success
+        } catch (error) {
+            console.error('Error restarting server:', error);
+            reject(error); // Add reject here
+            return false;
+        }
+    };
 }

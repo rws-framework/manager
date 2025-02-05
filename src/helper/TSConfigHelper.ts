@@ -1,16 +1,18 @@
-import fs, { link } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { ConfigHelper } from './ConfigHelper';
 import { BuildType } from '../types/run';
 import Singleton from './_singleton';
-import { PackageJson, TSConfigContent, TSConfigControls } from '../types/tsc';
+import { PackageJson, TSConfigContent, TSConfigControls, UserCompilerOptions } from '../types/tsc';
+import config from '../../../../rws.config';
+
 
 export class Pathkeeper {
-    constructor(private basePath: string, private filePath: string){};
+    constructor(private basePath: string, private filePath: string, private sameStringMode: boolean = false){};
 
     rel(): string
     {
-        return path.relative(this.basePath, this.filePath);
+        return this.sameStringMode ? this.filePath : path.relative(this.basePath, this.filePath);
     }
 
     abs(): string
@@ -19,7 +21,7 @@ export class Pathkeeper {
     }
 
     toString(): string {
-        return this.abs();
+        return this.filePath;
     }
 
     valueOf(): string {
@@ -33,6 +35,8 @@ export class Pathkeeper {
 
 export class TSConfigHelper extends Singleton {
     static tsFileName: string = '.rws.tsconfig.json';
+    private buildType: Exclude<BuildType, BuildType.ALL>
+    private cfg: ConfigHelper;
 
     build(        
         appRootPath: string,            
@@ -42,61 +46,70 @@ export class TSConfigHelper extends Singleton {
         const buildSection = cfg.getBuildTypeSection(buildType);
         const wrkDir = path.join(appRootPath, buildSection.workspaceDir);
         const tsPath = path.join(wrkDir, TSConfigHelper.tsFileName);
+        this.cfg = cfg;
 
         const _self = this;
         
-
+        _self.buildType = buildType;
         const controlSet: Partial<TSConfigControls> =  {
             isToRemove: false                        
         }      
 
-        function tsConfig(this: TSConfigControls, pkgPath: string, fileCreation: boolean = false, isToRemove: boolean = true){
+        async function tsConfig(this: TSConfigControls, pkgPath: string, fileCreation: boolean = false, isToRemove: boolean = true){
             const nodeModulesPath = path.join(appRootPath, 'node_modules');
 
-            this.isToRemove = isToRemove;
+            this.isToRemove = fileCreation && isToRemove;
             const cliExecPath = cfg.getCLIExecPath();
-            const basePath = '.';
-            const baseTsPath = path.join(pkgPath, 'tsconfig.json');
-            const baseTSConfig: TSConfigContent = JSON.parse(fs.readFileSync(baseTsPath, 'utf-8'));  
-                                
-            const mainModuleDeps = _self.scanDeps(nodeModulesPath, path.join(wrkDir, 'package.json'), true);
-
-            if(wrkDir !== appRootPath){
-                console.log({ mainModuleDeps });                
-                const appRootModuleDeps = _self.scanDeps(nodeModulesPath, path.join(appRootPath, 'package.json'), true);
-                console.log({ appRootModuleDeps });                
-
-            }
+            const basePath = '.';//appRootPath === wrkDir ? '.' : path.relative(wrkDir, appRootPath);
+            const baseTsPath = path.join(pkgPath, 'tsconfig.json');            
 
             const managerTSConfigContent: TSConfigContent = {        
                 compilerOptions: {  
-                    ...baseTSConfig.compilerOptions,       
+                    ..._self.getDefaultCompilerOptions(),       
                     baseUrl: basePath,
                     paths: {
                         ...(buildSection._builders?.ts?.paths || {})
                     }
                 }
             };
-            
-            const deps: Set<string> = _self.scanDeps(nodeModulesPath, path.join(pkgPath, 'package.json'));
 
-            console.log({deps});
+            const [includes, excludes] = await _self.getDependencies(nodeModulesPath, wrkDir, appRootPath, pkgPath);
+                
+            if(buildType !== BuildType.FRONT){
+                const conflictingType: BuildType = buildType === BuildType.BACK ? BuildType.CLI : BuildType.BACK;
+                const conflictingWorkspace = cfg.getBuildTypeSection(conflictingType);   
+                
+                const realNestPath = await _self.processDepItem('@rws-framework/server/nest', nodeModulesPath, wrkDir);
+                
+                managerTSConfigContent.compilerOptions.paths['@rws-framework/server/nest/index.ts'] = [
+                    path.relative(wrkDir, realNestPath)
+                ]
 
-            let includes: Pathkeeper[] = [
-                new Pathkeeper(wrkDir, path.join(wrkDir, 'src')),
-                new Pathkeeper(wrkDir, path.join(pkgPath)),
-                ...Array.from(deps).map(depItem => new Pathkeeper(wrkDir, _self.processDepItem(depItem, nodeModulesPath, pkgPath)))
-            ];
+                managerTSConfigContent.compilerOptions.paths['@rws-framework/server/nest/*'] = [
+                    path.relative(wrkDir, realNestPath) + '/*'
+                ]
 
-            let excludes: Pathkeeper[] = [
-                // new Pathkeeper(wrkDir, nodeModulesPath)
-            ]
+                includes.push(new Pathkeeper(wrkDir, realNestPath));
+                excludes.push(new Pathkeeper(wrkDir, conflictingWorkspace.entrypoint || './src/index.ts', true));
+            }else if(cfg.get().build.back){
+                const backWorkspace = cfg.getBuildTypeSection(BuildType.BACK);
+                if(backWorkspace.externalRoutesFile){
+                    const routesPaths = path.join(appRootPath, backWorkspace.workspaceDir, backWorkspace.externalRoutesFile);
+
+                    managerTSConfigContent.compilerOptions.paths[path.relative(wrkDir, routesPaths)] = [
+                        path.relative(wrkDir, routesPaths)
+                    ]
+
+                    managerTSConfigContent.compilerOptions.paths[path.relative(wrkDir, path.dirname(routesPaths) + '/*')] = [
+                        path.relative(wrkDir, path.dirname(routesPaths) + '/*')
+                    ]
+
+                    includes.push(new Pathkeeper(wrkDir, path.dirname(routesPaths)));
+                }                
+            }
 
             if(fileCreation){
-                const mapResolveRelative = (item: Pathkeeper): string => item.rel(); 
-
-                managerTSConfigContent.include = includes.map(mapResolveRelative);
-                managerTSConfigContent.exclude = excludes.map(mapResolveRelative);
+                _self.fitConfigMapping(managerTSConfigContent, includes, excludes);
 
                 fs.writeFileSync(tsPath, JSON.stringify(managerTSConfigContent, null, 2));           
             }
@@ -117,8 +130,8 @@ export class TSConfigHelper extends Singleton {
             }
         };
 
-        controlSet.tsConfig = tsConfig.bind(controlSet);
-        controlSet.remove = remove.bind(controlSet);
+        controlSet.tsConfig = tsConfig.bind(controlSet as TSConfigControls);
+        controlSet.remove = remove.bind(controlSet as TSConfigControls);
         
         return controlSet as TSConfigControls;
     }
@@ -126,6 +139,36 @@ export class TSConfigHelper extends Singleton {
     getPackageJson(jsonPath: string): PackageJson 
     {   
         return JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+    }
+
+    public async getDependencies(nodeModulesPath: string, wrkDir: string, appRootPath?: string, pkgPath?: string, forcedRoot?: string): Promise<[Pathkeeper[], Pathkeeper[]]>
+    {
+        const appRootModuleDeps = appRootPath && wrkDir !== appRootPath 
+            ? this.scanDeps(nodeModulesPath, path.join(appRootPath, 'package.json'), true) 
+            : new Set<string>();              
+    
+        const mainModuleDeps = new Set([
+            ...this.scanDeps(nodeModulesPath, path.join(wrkDir, 'package.json'), true), 
+            ...appRootModuleDeps
+        ]);
+
+        const entrypoint = path.join(wrkDir, this.cfg.getEntrypoint(this.buildType));
+        
+        const readyPackageSrc = fs.existsSync(path.join(wrkDir, 'src/index.ts')) ? [new Pathkeeper(forcedRoot ? forcedRoot : wrkDir, path.dirname(entrypoint))] : [];
+
+        const firstArray = [
+            ...readyPackageSrc,                             
+        ];
+
+        for(const mainDep of Array.from(mainModuleDeps)){            
+            if(!(['@rws-framework/server', '@rws-framework/db'].includes(mainDep) && this.buildType === BuildType.FRONT)){                
+                firstArray.push(new Pathkeeper(forcedRoot ? forcedRoot : wrkDir, await this.processDepItem(mainDep, nodeModulesPath, pkgPath, forcedRoot)))
+            }            
+        }
+            
+        const uniqueFirstArray = [...new Set(firstArray)];
+        
+        return [uniqueFirstArray, []];
     }
 
     private scanDeps(nodeModulesPath: string, pkgJsonPath: string, nonRwsScan = false): Set<string>
@@ -157,55 +200,57 @@ export class TSConfigHelper extends Singleton {
         return packageJson?._rws === true;
     }
 
-    private processDepItem(item: string, nodeModulesPath: string, packagePath: string): string
+    private async processDepItem(item: string, nodeModulesPath: string, packagePath?: string, forcedRoot?: string): Promise<string>
     {
-        const linkedPath = path.resolve(packagePath, '..', item.split('/')[1]);
-        if(fs.existsSync(linkedPath)){
-            return linkedPath;
-        }
+        const basicPath = path.join(nodeModulesPath, item);
+        
+        if(packagePath){
+            const packageRest = item.split('/').slice(2).join('/');
+            const packageDir = item.split('/')[1];
+            
+            const symlinkPath = path.join(nodeModulesPath, '@rws-framework', packageDir);
+            const pkgDirStat = fs.lstatSync(symlinkPath);          
 
-        return path.join(nodeModulesPath, item);
+            if(pkgDirStat.isSymbolicLink()){   
+              
+                const targetPath = await fs.promises.realpath(symlinkPath);                
+                return fs.existsSync(targetPath) ? path.join(targetPath, packageRest) : basicPath;
+            }
+        }        
+
+        return basicPath;
     }
 
-    private deepMergeTSConfigs(baseConfig: TSConfigContent, overrideConfig: TSConfigContent){
-        const merged: TSConfigContent = { ...baseConfig };
-
-        if (overrideConfig.compilerOptions) {
-            merged.compilerOptions = {
-                ...baseConfig.compilerOptions,
-                ...overrideConfig.compilerOptions,
-                paths: {
-                    ...(baseConfig.compilerOptions?.paths || {}),
-                    ...(overrideConfig.compilerOptions.paths || {})
-                }
-            };
+    getDefaultCompilerOptions(): UserCompilerOptions
+    {
+        return {
+            experimentalDecorators: true,
+            emitDecoratorMetadata: true,
+            target: "ES2018",
+            module: "commonjs",
+            moduleResolution: "node",
+            strict: false,
+            skipLibCheck: true,
+            esModuleInterop: true,
+            resolveJsonModule: true,
+            strictNullChecks: false,
+            allowSyntheticDefaultImports: true,
+            declaration: false,
+            baseUrl: ".",
+            lib: [
+                "DOM",
+                "ESNext",
+                "WebWorker"
+            ],
+            paths: {}
         }
+    }
 
-        if (overrideConfig.include) {
-            merged.include = [
-                ...(baseConfig.include || []),
-                ...overrideConfig.include
-            ];
-        }
+    fitConfigMapping(cfg: TSConfigContent, includes: Pathkeeper[], excludes: Pathkeeper[])
+    {
+        const mapResolveRelative = (item: Pathkeeper): string => item.rel(); 
 
-        if (overrideConfig.exclude) {
-            merged.exclude = [
-                ...(baseConfig.exclude || []),
-                ...overrideConfig.exclude
-            ];
-        }
-        
-        if (overrideConfig.extends) {
-            merged.extends = overrideConfig.extends;
-        }
-
-        if (overrideConfig.files) {
-            merged.files = [
-                ...(baseConfig.files || []),
-                ...overrideConfig.files
-            ];
-        }
-
-        return merged;
+        cfg.include = Array.from(new Set([...cfg.include || [], ...includes.map(mapResolveRelative)]));
+        cfg.exclude = Array.from(new Set([...cfg.exclude || [], ...excludes.map(mapResolveRelative)]));
     }
 }

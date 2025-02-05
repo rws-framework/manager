@@ -4,11 +4,11 @@ import { IManagerConfig, BaseRWSConfig, BuildersConfigurations } from "../types/
 import path from 'path';
 import { BuilderFactory } from '../helper/BuilderFactory';
 import { RWSRunner } from '../models/RWSRunner';
+import { RWSGenerator } from '../models/RWSGenerator';
 import fs from 'fs';
 import chalk from "chalk";
 import { BuilderType, BuildType, Environment, ManagerRunOptions, RunnableConfig } from "../types/run";
-
-
+import { GenerateType } from "../types/generate";
 
 export class RWSManager extends Singleton {
     private config: ConfigHelper<IManagerConfig>;
@@ -19,9 +19,9 @@ export class RWSManager extends Singleton {
         super();
 
         this.isVerbose = this.commandOptions.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
-        this.config = ConfigHelper.create(rwsConfig);        
+        this.config = ConfigHelper.create(rwsConfig, this.commandParams);        
 
-        this.appRootPath = this.config.getAppRoot();        
+        this.appRootPath = this.config.getAppRoot();
 
     }
 
@@ -86,6 +86,16 @@ export class RWSManager extends Singleton {
 
             await this.runWorkSpace(type);
         }        
+    }
+
+    public async generate(type: GenerateType)
+    {
+        if(!type){
+            throw new Error(`Generate subject type is required in second command parameter.\n Try ${Object.values(type).join(', ')}`);
+        }
+
+        const generator = new RWSGenerator(type, this.config);
+        await generator.generate();    
     }
 
     private async buildWorkSpace(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType = BuilderType.WEBPACK){             

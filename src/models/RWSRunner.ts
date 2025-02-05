@@ -23,8 +23,9 @@ export class RWSRunner {
     {        
         const sectionConfig = this.config.getBuildTypeSection(buildType) as RunnableConfig;        
         const outFilePath = this.config.getOutputFilePath(this.params.appRootPath, buildType as Exclude<BuildType, BuildType.ALL>);
-    
-        await rwsShell.runCommand(`${sectionConfig.environment} ${outFilePath}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
+        
+        const extraParams: string = buildType === BuildType.CLI && this.config.getAppParams().length ? ` ${this.config.getAppParams().join(' ')}` : '';
+        await rwsShell.runCommand(`${sectionConfig.environment} ${outFilePath}${extraParams}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
     }   
     
     checkRunnable(sectionType: Exclude<BuildType, BuildType.ALL>): RWSRunner

@@ -12,7 +12,7 @@ export interface BaseRWSConfig {
       [key: string]: string;
     };   
     env?: {
-        [key: string]: string | number | boolean;
+        [key: string]: string | undefined;
     };
     _builders?: BuildersConfigurations
 }
@@ -44,7 +44,7 @@ export interface IFrontendConfig extends BaseRWSConfig {
         [destinationPath: string]: string[];
     },
     env?: {        
-        [key: string]: string | number | boolean;
+        [key: string]: string | undefined;
         DOMAIN?: string;
         WS_URL?: string;
         BACKEND_URL?: string;          
@@ -52,8 +52,9 @@ export interface IFrontendConfig extends BaseRWSConfig {
 }
 
 export interface IBackendConfig  extends RunnableConfig { 
+    externalRoutesFile?:string;
     env?: {        
-        [key: string]: string | number | boolean;
+        [key: string]: string | undefined;
         DOMAIN?: string;        
     }   
 }
@@ -71,3 +72,5 @@ export interface IManagerConfig {
     dev?: boolean,
     build: IRWSWorkspaces,
 }
+
+export {RunnableConfig}

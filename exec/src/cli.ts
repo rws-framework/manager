@@ -5,7 +5,14 @@ import { getCommandContext } from './_args';
 import commands from './commands';
 import { RWSManager } from '../../src/managers/RWSManager';
 import { BuildType } from '../../src/types/run';
+import { GenerateType } from '@/src/types/generate';
 
+enum RWSManagerActions {
+  BUILD = 'build',
+  RUN = 'run',
+  GENERATE = 'generate',
+  CLI = 'cli'
+}
 
 async function main(): Promise<void>
 {  
@@ -14,17 +21,13 @@ async function main(): Promise<void>
 
   const manager = await RWSManager.start(commandParams, commandOptions);
 
-  if(primaryCommand === 'build'){
-    await manager.build(secondaryCommand as BuildType);
-
-    console.log(chalk.bgGreen('[RWS MANAGER] Build complete.'));
+  switch(primaryCommand){
+    case RWSManagerActions.BUILD: return await manager.build(secondaryCommand as BuildType);
+    case RWSManagerActions.RUN: return await manager.run(secondaryCommand as BuildType);
+    case RWSManagerActions.GENERATE: return await manager.generate(secondaryCommand as GenerateType);
+    case RWSManagerActions.CLI: return await manager.run(BuildType.CLI);
   }
 
-  if(primaryCommand === 'run'){
-    await manager.run(secondaryCommand as BuildType);
-
-    console.log(chalk.bgGreen('[RWS MANAGER] Run complete.'));
-  }
 }
 
 console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));

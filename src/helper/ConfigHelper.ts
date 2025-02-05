@@ -8,7 +8,7 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
     private cliExecPath: string;
     private appRootPath: string;
 
-    private constructor(_DEFAULT_CONFIG?: T){
+    private constructor(_DEFAULT_CONFIG?: T, private appParams: string[] = []){
         super();    
         
         if(_DEFAULT_CONFIG){            
@@ -22,6 +22,10 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
     get(): IManagerConfig
     {
         return this.data;
+    }
+
+    getAppParams(){
+        return this.appParams;
     }
 
     getCLIExecPath(): string
