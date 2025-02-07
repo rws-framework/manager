@@ -4,8 +4,6 @@ import { ConfigHelper } from './ConfigHelper';
 import { BuildType } from '../types/run';
 import Singleton from './_singleton';
 import { PackageJson, TSConfigContent, TSConfigControls, UserCompilerOptions } from '../types/tsc';
-import config from '../../../../rws.config';
-
 
 export class Pathkeeper {
     constructor(private basePath: string, private filePath: string, private sameStringMode: boolean = false){};
@@ -36,17 +34,22 @@ export class Pathkeeper {
 export class TSConfigHelper extends Singleton {
     static tsFileName: string = '.rws.tsconfig.json';
     private buildType: Exclude<BuildType, BuildType.ALL>
-    private cfg: ConfigHelper;
+
+    constructor(private cfg: ConfigHelper){
+        super();        
+
+        if(cfg){
+            this.cfg = cfg;
+        }
+    }
 
     build(        
-        appRootPath: string,            
-        cfg: ConfigHelper,
+        appRootPath: string,
         buildType: Exclude<BuildType, BuildType.ALL>
     ): TSConfigControls  {
-        const buildSection = cfg.getBuildTypeSection(buildType);
+        const buildSection = this.cfg.getBuildTypeSection(buildType);
         const wrkDir = path.join(appRootPath, buildSection.workspaceDir);
-        const tsPath = path.join(wrkDir, TSConfigHelper.tsFileName);
-        this.cfg = cfg;
+        const tsPath = path.join(wrkDir, TSConfigHelper.tsFileName);        
 
         const _self = this;
         
@@ -59,7 +62,7 @@ export class TSConfigHelper extends Singleton {
             const nodeModulesPath = path.join(appRootPath, 'node_modules');
 
             this.isToRemove = fileCreation && isToRemove;
-            const cliExecPath = cfg.getCLIExecPath();
+            const cliExecPath = _self.cfg.getCLIExecPath();
             const basePath = '.';//appRootPath === wrkDir ? '.' : path.relative(wrkDir, appRootPath);
             const baseTsPath = path.join(pkgPath, 'tsconfig.json');            
 
@@ -73,26 +76,26 @@ export class TSConfigHelper extends Singleton {
                 }
             };
 
-            const [includes, excludes] = await _self.getDependencies(nodeModulesPath, wrkDir, appRootPath, pkgPath);
+            const [includes, excludes] = await _self.getDependencies(nodeModulesPath, wrkDir, appRootPath, pkgPath);        
                 
             if(buildType !== BuildType.FRONT){
                 const conflictingType: BuildType = buildType === BuildType.BACK ? BuildType.CLI : BuildType.BACK;
-                const conflictingWorkspace = cfg.getBuildTypeSection(conflictingType);   
+                const conflictingWorkspace = _self.cfg.getBuildTypeSection(conflictingType);   
                 
                 const realNestPath = await _self.processDepItem('@rws-framework/server/nest', nodeModulesPath, wrkDir);
                 
                 managerTSConfigContent.compilerOptions.paths['@rws-framework/server/nest/index.ts'] = [
                     path.relative(wrkDir, realNestPath)
-                ]
+                ];
 
                 managerTSConfigContent.compilerOptions.paths['@rws-framework/server/nest/*'] = [
                     path.relative(wrkDir, realNestPath) + '/*'
-                ]
+                ];
 
                 includes.push(new Pathkeeper(wrkDir, realNestPath));
                 excludes.push(new Pathkeeper(wrkDir, conflictingWorkspace.entrypoint || './src/index.ts', true));
-            }else if(cfg.get().build.back){
-                const backWorkspace = cfg.getBuildTypeSection(BuildType.BACK);
+            }else if(_self.cfg.get().build.back){
+                const backWorkspace = _self.cfg.getBuildTypeSection(BuildType.BACK);
                 if(backWorkspace.externalRoutesFile){
                     const routesPaths = path.join(appRootPath, backWorkspace.workspaceDir, backWorkspace.externalRoutesFile);
 
@@ -141,8 +144,12 @@ export class TSConfigHelper extends Singleton {
         return JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
     }
 
-    public async getDependencies(nodeModulesPath: string, wrkDir: string, appRootPath?: string, pkgPath?: string, forcedRoot?: string): Promise<[Pathkeeper[], Pathkeeper[]]>
+    public async getDependencies(nodeModulesPath: string, wrkDir: string, appRootPath?: string, pkgPath?: string, forcedRoot?: string, buildType?: Exclude<BuildType, BuildType.ALL>): Promise<[Pathkeeper[], Pathkeeper[]]>
     {
+        if(buildType){
+            this.buildType = buildType;
+        }
+
         const appRootModuleDeps = appRootPath && wrkDir !== appRootPath 
             ? this.scanDeps(nodeModulesPath, path.join(appRootPath, 'package.json'), true) 
             : new Set<string>();              
@@ -160,14 +167,12 @@ export class TSConfigHelper extends Singleton {
             ...readyPackageSrc,                             
         ];
 
-        for(const mainDep of Array.from(mainModuleDeps)){            
-            if(!(['@rws-framework/server', '@rws-framework/db'].includes(mainDep) && this.buildType === BuildType.FRONT)){                
-                firstArray.push(new Pathkeeper(forcedRoot ? forcedRoot : wrkDir, await this.processDepItem(mainDep, nodeModulesPath, pkgPath, forcedRoot)))
-            }            
+        for(const mainDep of Array.from(mainModuleDeps)){                 
+              firstArray.push(new Pathkeeper(forcedRoot ? forcedRoot : wrkDir, await this.processDepItem(mainDep, nodeModulesPath, pkgPath, forcedRoot)));           
         }
             
-        const uniqueFirstArray = [...new Set(firstArray)];
-        
+        const uniqueFirstArray = [...new Set(firstArray)];            
+
         return [uniqueFirstArray, []];
     }
 
@@ -184,6 +189,8 @@ export class TSConfigHelper extends Singleton {
             ...(Object.keys(packageJson.dependencies ?? {}).filter(packageName => packageName.startsWith('@rws-framework') && this.isRWSPackage(nodeModulesPath, packageName))),
             ...(Object.keys(packageJson.devDependencies ?? {}).filter(packageName => packageName.startsWith('@rws-framework') && this.isRWSPackage(nodeModulesPath, packageName)))
         ]);    
+
+        
 
         let subDependencies = new Set<string>();
 

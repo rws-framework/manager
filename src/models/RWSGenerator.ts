@@ -8,9 +8,7 @@ import { BuildType } from "../types/run";
 import chalk from "chalk";
 
 export class RWSGenerator {
-    constructor(private type: GenerateType, private config: ConfigHelper){
-
-    }
+    constructor(private type: GenerateType, private config: ConfigHelper){}
 
     async generate(){
         switch(this.type){
@@ -26,7 +24,7 @@ export class RWSGenerator {
             throw new Error('RWS can generate tsconfig.json only in root path with "rws.config.ts" inside.');
         }
 
-        const tsHelper = TSConfigHelper.create<TSConfigHelper>();
+        const tsHelper = TSConfigHelper.create<TSConfigHelper>(this.config);
 
         const compilerOptions: UserCompilerOptions = tsHelper.getDefaultCompilerOptions();
         const targetFilePath = path.join(targetTsPath, 'tsconfig.json');
@@ -39,12 +37,14 @@ export class RWSGenerator {
 
         for (const workspaceType of Object.values(BuildType).filter(item => item !== BuildType.ALL)){
             const workspaceInfo = this.config.getBuildTypeSection(workspaceType as Exclude<BuildType, BuildType.ALL>);
+
             const workspaceDeps: [Pathkeeper[], Pathkeeper[]] = await tsHelper.getDependencies(
                 path.join(targetTsPath, 'node_modules'), 
                 path.join(targetTsPath, workspaceInfo.workspaceDir), 
                 targetTsPath,
                 undefined,
-                targetTsPath
+                targetTsPath,
+                workspaceType as Exclude<BuildType, BuildType.ALL>
             );                                
 
             for (let i = 0; i < 2; i++) {

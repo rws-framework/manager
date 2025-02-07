@@ -40,9 +40,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 pkgPath
             } = await this.getBuildData();
 
-            const tsConfigControls = TSConfigHelper.create<TSConfigHelper>().build(                
+            const tsConfigControls = TSConfigHelper.create<TSConfigHelper>(this.config).build(                
                 this.appRootPath,                
-                this.config,
                 this.buildType
             );            
 

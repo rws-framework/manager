@@ -1,6 +1,6 @@
 import path from 'path';
 import { BuilderType, BuildType } from '../types/run';
-import { BuildersConfigurations, IManagerConfig, BuildConfig, BaseRWSConfig, RunnableConfig, IRWSWorkspaces, IFrontendConfig, IBackendConfig, ICLIConfig } from '../types/manager';
+import { BuildersConfigurations, IManagerConfig, BuildConfig, BaseRWSConfig, RunnableConfig, IRWSWorkspaces, IFrontendConfig, IBackendConfig, ICLIConfig, IWebpackRWSConfig } from '../types/manager';
 import Singleton from './_singleton';
 
 export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Singleton {
@@ -49,7 +49,7 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
     getBuildTypeSection(type: Exclude<BuildType, BuildType.ALL>): IFrontendConfig & IBackendConfig & ICLIConfig
     {
         const buildTypeSection = this.data.build[type as keyof IRWSWorkspaces];
-
+        
         switch(type){
             case BuildType.FRONT: return buildTypeSection as IFrontendConfig;
             case BuildType.BACK: return buildTypeSection as IBackendConfig;
@@ -58,13 +58,13 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
         }    
     }
 
-    getBuilderSection(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType): BuildConfig<any> | null
+    getBuilderSection(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType): IWebpackRWSConfig 
     {
         const buildTypeSection = this.getBuildTypeSection(type);
         const buildersConfig: BuildersConfigurations | undefined = buildTypeSection._builders;
         const builderConfigData = buildersConfig ? buildersConfig[builderType as keyof BuildersConfigurations] : null;
 
-        return builderConfigData ?? null;
+        return builderConfigData as IWebpackRWSConfig;
     }
 
     getEntrypoint(type: Exclude<BuildType, BuildType.ALL>): string

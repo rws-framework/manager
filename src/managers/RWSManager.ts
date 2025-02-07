@@ -20,9 +20,13 @@ export class RWSManager extends Singleton {
 
         this.isVerbose = this.commandOptions.find(arg => arg.indexOf('--verbose') > -1) !== undefined;
         this.config = ConfigHelper.create(rwsConfig, this.commandParams);        
+        this.appRootPath = this.config.getAppRoot();        
+    }
 
-        this.appRootPath = this.config.getAppRoot();
-
+    public static async start(commandParams: string[] = [], options: string[]): Promise<RWSManager>
+{       const cfg  = await this.getRWSConfig();
+        
+        return this.create(cfg, commandParams, options);
     }
 
     private initCfg(type: Exclude<BuildType, BuildType.ALL>): void
@@ -34,12 +38,7 @@ export class RWSManager extends Singleton {
     {
         //@ts-ignore
         return (await import(`@rws-config`)).default();
-    }
-
-    public static async start(commandParams: string[] = [], options: string[]): Promise<RWSManager>
-    {       
-        return RWSManager.create(await this.getRWSConfig(), commandParams, options);
-    }
+    }   
 
     public async build(type?: BuildType)
     {
