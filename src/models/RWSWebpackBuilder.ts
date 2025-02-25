@@ -46,8 +46,9 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             );            
 
             const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {   
-              environment: workspaceCfg.environment || Environment.NODE,     
+              environment: workspaceCfg.environment || Environment.NODE,
               dev: cfg.dev || false,
+              devtools: cfg.dev ? 'source-map' : false,
               entrypoint: workspaceCfg.entrypoint || './src/index.ts',
               executionDir: workDir,
               outputDir:  workspaceCfg?.outputDir || './build',

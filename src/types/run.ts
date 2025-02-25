@@ -28,6 +28,7 @@ export enum Environment {
 
 export interface RunnableConfig extends BaseRWSConfig {
     environment?: Environment;
+    devtools?: string | false | null;
     processOptions?: {
 
     }
