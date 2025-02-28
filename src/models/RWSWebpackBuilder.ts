@@ -239,7 +239,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
         }));        
 
         try {
-            if (enableServerRestart) {
+            if (enableServerRestart && this.buildType !== BuildType.FRONT) {
                 await this.restartServer();
             }
             return true; // Indicate success
