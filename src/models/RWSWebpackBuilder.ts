@@ -60,7 +60,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               parted: workspaceCfg?.parted,
               partedDirUrlPrefix: workspaceCfg?.partedDirUrlPrefix,    
               copyAssets: workspaceCfg?.copyAssets,
-              env: workspaceCfg?.env,     
+              env: workspaceCfg?.env,                   
 
               //front debug
               hotReload: workspaceCfg?.hotReload,
