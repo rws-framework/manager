@@ -49,7 +49,7 @@ export class TSConfigHelper extends Singleton {
     ): TSConfigControls  {
         const buildSection = this.cfg.getBuildTypeSection(buildType);
         const wrkDir = path.join(appRootPath, buildSection.workspaceDir);
-        const tsPath = path.join(wrkDir, TSConfigHelper.tsFileName);        
+        const tsPath = path.join(wrkDir, TSConfigHelper.tsFileName);                
 
         const _self = this;
         
@@ -77,7 +77,7 @@ export class TSConfigHelper extends Singleton {
             };
 
             const [includes, excludes] = await _self.getDependencies(nodeModulesPath, wrkDir, appRootPath, pkgPath);        
-                
+
             if(buildType !== BuildType.FRONT){
                 const conflictingType: BuildType = buildType === BuildType.BACK ? BuildType.CLI : BuildType.BACK;
                 const conflictingWorkspace = _self.cfg.getBuildTypeSection(conflictingType);   
@@ -160,8 +160,9 @@ export class TSConfigHelper extends Singleton {
         ]);
 
         const entrypoint = path.join(wrkDir, this.cfg.getEntrypoint(this.buildType));
+
         
-        const readyPackageSrc = fs.existsSync(path.join(wrkDir, 'src/index.ts')) ? [new Pathkeeper(forcedRoot ? forcedRoot : wrkDir, path.dirname(entrypoint))] : [];
+        const readyPackageSrc = fs.existsSync(path.join(wrkDir, 'src')) ? [new Pathkeeper(forcedRoot ? forcedRoot : wrkDir, path.dirname(entrypoint))] : [];
 
         const firstArray = [
             ...readyPackageSrc,                             
@@ -213,8 +214,8 @@ export class TSConfigHelper extends Singleton {
         
         if(packagePath){
             const packageRest = item.split('/').slice(2).join('/');
-            const packageDir = item.split('/')[1];
-            
+            let packageDir = item.split('/')[1];    
+
             const symlinkPath = path.join(nodeModulesPath, '@rws-framework', packageDir);
             const pkgDirStat = fs.lstatSync(symlinkPath);          
 
@@ -258,6 +259,22 @@ export class TSConfigHelper extends Singleton {
         const mapResolveRelative = (item: Pathkeeper): string => item.rel(); 
 
         cfg.include = Array.from(new Set([...cfg.include || [], ...includes.map(mapResolveRelative)]));
+
+        // const frontPkg = cfg.include.find((item) => item.includes('/client'));        
+        // if(frontPkg){
+        //     cfg.include.push(path.join(frontPkg, 'nest'));
+        // }
+
+        cfg.include = cfg.include.map((item) => {
+             if(item.includes('/client') && !item.includes('/client/nest')){
+                return path.join(item, 'src');
+             }else{
+                return item;
+             }
+        });
+
+       
+
         cfg.exclude = Array.from(new Set([...cfg.exclude || [], ...excludes.map(mapResolveRelative)]));
     }
 }
