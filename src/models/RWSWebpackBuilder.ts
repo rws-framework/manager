@@ -6,7 +6,7 @@ import fs from 'fs';
 import { BuildersConfigurations, IBackendConfig, ICLIConfig, IFrontendConfig, IWebpackRWSConfig } from '../types/manager';
 import { BuildType, Environment, ManagerRunOptions, RunnableConfig } from '../types/run';
 import { TSConfigData } from '../types/tsc';
-
+import { rwsPath } from '@rws-framework/console';
 import { TSConfigHelper } from '../helper/TSConfigHelper';
 import { ChildProcess, spawn } from 'child_process';
 import { RWSRunner } from './RWSRunner';
@@ -85,13 +85,38 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
         let rwsBuilder: RWSBuilderType;
         let pkgPath: string = '';
 
+        // Helper function to safely import a module from workspace root's node_modules
+        const safeImport = async (basePath: string, modulePath: string) => {
+            try {
+                const rootWorkspacePath = rwsPath.findRootWorkspacePath();
+                const resolvedPath = path.join(rootWorkspacePath, 'node_modules', basePath, modulePath);
+
+                if(fs.existsSync(resolvedPath)){
+                    console.log(`FILE EXISTS: ${resolvedPath}`);
+                }
+
+                console.log(`Attempting to require module from: ${resolvedPath}`);
+                
+                // Use normal dynamic require
+                // @ts-ignore
+                const module = require(resolvedPath);
+
+                console.log({module});
+
+                return module.default || module;
+            } catch (e) {
+                console.warn(`Failed to import module ${basePath}${modulePath} from workspace root: ${e}`);
+                return undefined;
+            }
+        };
+
         switch(this.buildType){
             //@ts-ignore
-            case BuildType.FRONT: rwsBuilder = ((await import('@rws-framework/client/builder/webpack/rws.webpack.config.js')).default) as any; pkgPath = '@rws-framework/client'; break;
+            case BuildType.FRONT: rwsBuilder = ((await import('@rws-client-webpack')).default) as any; pkgPath = '@rws-framework/client'; break;
             //@ts-ignore
-            case BuildType.BACK: rwsBuilder = ((await import('@rws-framework/server/rws.webpack.config.js')).default) as any; pkgPath = '@rws-framework/server'; break;
+            case BuildType.BACK: rwsBuilder = ((await import('@rws-server-webpack')).default) as any; pkgPath = '@rws-framework/server'; break;
             //@ts-ignore
-            case BuildType.CLI: rwsBuilder = ((await import('@rws-framework/server/cli.rws.webpack.config.js')).default) as any; pkgPath = '@rws-framework/server'; break;
+            case BuildType.CLI: rwsBuilder = ((await import('@rws-server-cli-webpack')).default) as any; pkgPath = '@rws-framework/server'; break;
         }            
 
         if(!rwsBuilder || pkgPath === ''){
@@ -243,7 +268,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 await this.restartServer();
             }
             return true; // Indicate success
-        } catch (error) {
+        } catch (error: Error | any) {
             console.error('Error restarting server:', error);
             reject(error); // Add reject here
             return false;

@@ -244,6 +244,8 @@ export class TSConfigHelper extends Singleton {
             strictNullChecks: false,
             allowSyntheticDefaultImports: true,
             declaration: false,
+            allowJs: true,
+            checkJs: false,
             baseUrl: ".",
             lib: [
                 "DOM",

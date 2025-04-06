@@ -1,11 +1,11 @@
-import 'reflect-metadata';
+// import 'reflect-metadata';
 
 import chalk from 'chalk';
 import { getCommandContext } from './_args';
 import commands from './commands';
 import { RWSManager } from '../../src/managers/RWSManager';
 import { BuildType } from '../../src/types/run';
-import { GenerateType } from '@/src/types/generate';
+import { GenerateType } from '../../src/types/generate';
 
 enum RWSManagerActions {
   BUILD = 'build',
@@ -16,7 +16,8 @@ enum RWSManagerActions {
 
 async function main(): Promise<void>
 {  
-  
+  console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));
+
   const { primaryCommand, secondaryCommand, commandParams, commandOptions, isAfterRebuild } = getCommandContext(commands);
 
   const manager = await RWSManager.start(commandParams, commandOptions);
@@ -30,6 +31,11 @@ async function main(): Promise<void>
 
 }
 
-console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));
-
-main();
+// Make sure the main function is executed when this module is run directly
+if (require.main === module) {
+  console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));
+  main().catch(error => {
+    console.error(chalk.red(`[RWS MANAGER] Error: ${error.message}`));
+    process.exit(1);
+  });
+}

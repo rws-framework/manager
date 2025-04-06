@@ -35,8 +35,13 @@ export class RWSGenerator {
         
         const uniquePaths: [Pathkeeper[], Pathkeeper[]] = [[],[]];
 
+
         for (const workspaceType of Object.values(BuildType).filter(item => item !== BuildType.ALL)){
-            const workspaceInfo = this.config.getBuildTypeSection(workspaceType as Exclude<BuildType, BuildType.ALL>);
+            const workspaceInfo = this.config.getBuildTypeSection(workspaceType as Exclude<BuildType, BuildType.ALL>);            
+
+            if(!workspaceInfo){
+                continue;
+            }
 
             const workspaceDeps: [Pathkeeper[], Pathkeeper[]] = await tsHelper.getDependencies(
                 path.join(targetTsPath, 'node_modules'), 
