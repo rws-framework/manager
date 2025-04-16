@@ -99,9 +99,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 
                 // Use normal dynamic require
                 // @ts-ignore
-                const module = require(resolvedPath);
-
-                console.log({module});
+                const module = require(resolvedPath);                
 
                 return module.default || module;
             } catch (e) {
@@ -256,12 +254,12 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             return;
         }
 
-        console.log(stats?.toString({ 
-            colors: true,
-            chunks: false,
-            modules: false,
-            assets: true
-        }));        
+        // console.log(stats?.toString({ 
+        //     colors: true,
+        //     chunks: false,
+        //     modules: false,
+        //     assets: true
+        // }));        
 
         try {
             if (enableServerRestart && this.buildType !== BuildType.FRONT) {

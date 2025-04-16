@@ -110,6 +110,15 @@ export class TSConfigHelper extends Singleton {
                     includes.push(new Pathkeeper(wrkDir, path.dirname(routesPaths)));
                 }                
             }
+            
+            if(buildType === BuildType.FRONT){
+                const realBuilderPath = await _self.processDepItem('@rws-framework/client/builder', nodeModulesPath, wrkDir);
+                const realCfgPath = await _self.processDepItem('@rws-framework/client/cfg', nodeModulesPath, wrkDir);
+
+                excludes.push(new Pathkeeper(wrkDir, realBuilderPath));
+                excludes.push(new Pathkeeper(wrkDir, realCfgPath));
+            }
+
 
             if(fileCreation){
                 _self.fitConfigMapping(managerTSConfigContent, includes, excludes);
