@@ -43,7 +43,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             const tsConfigControls = TSConfigHelper.create<TSConfigHelper>(this.config).build(                
                 this.appRootPath,                
                 this.buildType
-            );            
+            );                      
 
             const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {   
               environment: workspaceCfg.environment || Environment.NODE,
@@ -110,12 +110,12 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
 
         switch(this.buildType){
             //@ts-ignore
-            case BuildType.FRONT: rwsBuilder = ((await import('@rws-client-webpack')).default) as any; pkgPath = '@rws-framework/client'; break;
+            case BuildType.FRONT: rwsBuilder = (await (await import('@rws-client-webpack')).default) as any; pkgPath = '@rws-framework/client'; break;
             //@ts-ignore
-            case BuildType.BACK: rwsBuilder = ((await import('@rws-server-webpack')).default) as any; pkgPath = '@rws-framework/server'; break;
+            case BuildType.BACK: rwsBuilder = (await (await import('@rws-server-webpack')).default) as any; pkgPath = '@rws-framework/server'; break;
             //@ts-ignore
-            case BuildType.CLI: rwsBuilder = ((await import('@rws-server-cli-webpack')).default) as any; pkgPath = '@rws-framework/server'; break;
-        }            
+            case BuildType.CLI: rwsBuilder = (await (await import('@rws-server-cli-webpack')).default) as any; pkgPath = '@rws-framework/server'; break;
+        }                
 
         if(!rwsBuilder || pkgPath === ''){
             throw new Error(`Builder couldn't find webpack loader from ${this.buildType}`);
