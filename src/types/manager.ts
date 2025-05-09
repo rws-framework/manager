@@ -1,5 +1,6 @@
 import { Configuration as WebpackConfig } from 'webpack';
 import { RunnableConfig } from '../types/run';
+import { TSConfigData } from './tsc';
 
 export interface BaseRWSConfig {    
     workspaceDir: string;       
@@ -22,7 +23,9 @@ export interface BuildersConfigurations {
     ts?: {
         paths?: {
             [alias: string]: string[]
-        }
+        },
+        includes?: string[],
+        excludes?: string[]
     }
 }
 
@@ -70,7 +73,7 @@ export interface IRWSWorkspaces {
 
 export interface IManagerConfig {
     dev?: boolean,
-    build: IRWSWorkspaces,
+    build: IRWSWorkspaces    
 }
 
 export {RunnableConfig}

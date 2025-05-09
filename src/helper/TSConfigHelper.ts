@@ -119,12 +119,17 @@ export class TSConfigHelper extends Singleton {
                 excludes.push(new Pathkeeper(wrkDir, realCfgPath));
             }
 
+            if(buildSection._builders?.ts?.includes){
+                for(const incl of buildSection._builders.ts.includes){
+                    includes.push(new Pathkeeper(wrkDir, incl));
+                }                
+            }            
 
             if(fileCreation){
                 _self.fitConfigMapping(managerTSConfigContent, includes, excludes);
 
                 fs.writeFileSync(tsPath, JSON.stringify(managerTSConfigContent, null, 2));           
-            }
+            }              
     
             return {
                 config: managerTSConfigContent,
