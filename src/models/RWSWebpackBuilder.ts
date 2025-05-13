@@ -169,6 +169,23 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
         const _self = this;
 
         await new Promise<void>( async function (resolve, reject){
+            if(watch){
+                // buildCfg.watchOptions = {
+                //     aggregateTimeout: 300,
+                //     poll: 1000,
+                //     ignored: [
+                //         '**/node_modules/**',
+                //         '**/*.*',
+                //         '!**/*.ts',
+                //         '!**/*.scss',
+                //         '!**/*.html'
+                //     ]
+                // };
+    
+                // // To jest klucz - dodajemy osobno watchFiles
+                // buildCfg.watch = true;               
+            }
+
             const compiler = webpack(buildCfg);                
                 
             if (watch) {
@@ -198,15 +215,30 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
         resolve: () => void, 
         reject: (err: Error | null) => void
      })
-    {
-       
+    {       
         const _self = this;
-        compiler.watch({}, async function (err: Error | null, stats?: Stats) {
+        
+        const watchOptions = {};
+
+        compiler.hooks.watchRun.tap('WatchLogger', (comp) => {
+            const changedFiles = comp.modifiedFiles;
+            if(changedFiles){
+                const changedList = Array.from(changedFiles);
+                if(changedList.length) {
+                    console.log('🔄 Detected file changes:', changedList);  
+                    // comp.watching?.invalidate();           
+                }
+            }            
+        });
+
+        const watching = compiler.watch(watchOptions, async function (err: Error | null, stats?: Stats) {
             const success = await _self.handleBuildResult(reject, err, stats, true);
             if (success) {                
                 resolve();
             }
         });
+
+        // resolve();
     }
 
     private compile(compiler: Compiler, { resolve, reject } : { 
@@ -238,7 +270,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
         if (err) {
             console.error(err);
             reject(err); // Add reject here
-            return;
+            return false;
         }
 
         if (stats?.hasErrors()) {
@@ -251,7 +283,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             });
             console.error(output);
             reject(new Error('Build failed with errors')); // Add reject here
-            return;
+            return false;
         }
 
         // console.log(stats?.toString({ 
