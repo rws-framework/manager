@@ -45,6 +45,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
                 this.buildType
             );                      
 
+            console.log(workspaceCfg._builders?.webpack);
+
             const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {   
               environment: workspaceCfg.environment || Environment.NODE,
               dev: cfg.dev || false,
@@ -54,7 +56,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               outputDir:  workspaceCfg?.outputDir || './build',
               outputFileName: workspaceCfg?.outputFileName || `${this.buildType.toLowerCase()}.rws.js`,
               tsConfig: tsConfigControls.tsConfig as any,
-              publicDir:  workspaceCfg?.publicDir,                               
+              publicDir:  workspaceCfg?.publicDir,       
+              externalsOverride: workspaceCfg?._builders?.webpack?.externalsOverride,                    
              
               //front
               parted: workspaceCfg?.parted,
@@ -79,7 +82,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async getBuildData() {
-        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData; };
+        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData } & { externalsOverride?: string[] };
         type RWSBuilderType = ((appRoot: string, buildParams: WorkspaceBuildParams, workspaceDir: string) => Promise<WebpackConfig>) | undefined;
 
         let rwsBuilder: RWSBuilderType;

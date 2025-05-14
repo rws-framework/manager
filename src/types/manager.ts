@@ -35,7 +35,7 @@ export interface BuildConfig<T> {
 }
 
 export interface IWebpackRWSConfig extends BuildConfig<WebpackConfig> {
-
+    externalsOverride?: string[]
 }
 
 export interface IFrontendConfig extends BaseRWSConfig {
@@ -55,7 +55,7 @@ export interface IFrontendConfig extends BaseRWSConfig {
 }
 
 export interface IBackendConfig  extends RunnableConfig { 
-    externalRoutesFile?:string;
+    externalRoutesFiles?:string[];
     env?: {        
         [key: string]: string | undefined;
         DOMAIN?: string;        

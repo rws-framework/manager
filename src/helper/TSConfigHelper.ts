@@ -96,18 +96,20 @@ export class TSConfigHelper extends Singleton {
                 excludes.push(new Pathkeeper(wrkDir, conflictingWorkspace.entrypoint || './src/index.ts', true));
             }else if(_self.cfg.get().build.back){
                 const backWorkspace = _self.cfg.getBuildTypeSection(BuildType.BACK);
-                if(backWorkspace.externalRoutesFile){
-                    const routesPaths = path.join(appRootPath, backWorkspace.workspaceDir, backWorkspace.externalRoutesFile);
+                if(backWorkspace.externalRoutesFiles && backWorkspace.externalRoutesFiles.length){
+                    for(const routesFile of backWorkspace.externalRoutesFiles){
+                        const routesPaths = path.join(appRootPath, backWorkspace.workspaceDir, routesFile);
 
-                    managerTSConfigContent.compilerOptions.paths[path.relative(wrkDir, routesPaths)] = [
-                        path.relative(wrkDir, routesPaths)
-                    ]
-
-                    managerTSConfigContent.compilerOptions.paths[path.relative(wrkDir, path.dirname(routesPaths) + '/*')] = [
-                        path.relative(wrkDir, path.dirname(routesPaths) + '/*')
-                    ]
-
-                    includes.push(new Pathkeeper(wrkDir, path.dirname(routesPaths)));
+                        managerTSConfigContent.compilerOptions.paths[path.relative(wrkDir, routesPaths)] = [
+                            path.relative(wrkDir, routesPaths)
+                        ]
+    
+                        managerTSConfigContent.compilerOptions.paths[path.relative(wrkDir, path.dirname(routesPaths) + '/*')] = [
+                            path.relative(wrkDir, path.dirname(routesPaths) + '/*')
+                        ]
+    
+                        includes.push(new Pathkeeper(wrkDir, routesPaths));
+                    }                  
                 }                
             }
             
@@ -121,7 +123,8 @@ export class TSConfigHelper extends Singleton {
 
             if(buildSection._builders?.ts?.includes){
                 for(const incl of buildSection._builders.ts.includes){
-                    includes.push(new Pathkeeper(wrkDir, incl));
+                    const pathModel = new Pathkeeper(wrkDir, path.resolve(wrkDir,incl));                    
+                    includes.push(pathModel);
                 }                
             }            
 
