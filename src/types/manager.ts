@@ -36,7 +36,7 @@ export interface BuildConfig<T> {
 
 export interface IWebpackRWSConfig extends BuildConfig<WebpackConfig> {
     externalsOverride?: string[]
-    loaderIgnoreExceptionString?: string
+    loaderIgnoreExceptions?: string[]
 }
 
 export interface IFrontendConfig extends BaseRWSConfig {
