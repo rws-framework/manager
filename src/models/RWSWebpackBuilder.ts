@@ -224,7 +224,13 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
         
         const watchOptions = {};
 
+        let first = true;
+
         compiler.hooks.watchRun.tap('WatchLogger', (comp) => {
+            if(first){
+                first = false;
+                return;
+            }
             const changedFiles = comp.modifiedFiles;
             if(changedFiles){
                 const changedList = Array.from(changedFiles);

@@ -36,6 +36,7 @@ if (require.main === module) {
   console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));
   main().catch(error => {
     console.error(chalk.red(`[RWS MANAGER] Error: ${error.message}`));
+    console.error(error);
     process.exit(1);
   });
 }

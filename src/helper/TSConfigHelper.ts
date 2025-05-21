@@ -76,7 +76,7 @@ export class TSConfigHelper extends Singleton {
                 }
             };
 
-            const [includes, excludes] = await _self.getDependencies(nodeModulesPath, wrkDir, appRootPath, pkgPath);        
+            const [includes, excludes] = await _self.getDependencies(nodeModulesPath, wrkDir, appRootPath, pkgPath);                    
 
             if(buildType !== BuildType.FRONT){
                 const conflictingType: BuildType = buildType === BuildType.BACK ? BuildType.CLI : BuildType.BACK;
