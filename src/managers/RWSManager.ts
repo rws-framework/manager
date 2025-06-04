@@ -41,7 +41,8 @@ export class RWSManager extends Singleton {
     }   
 
     public async build(type?: BuildType)
-    {
+    {        
+
         if(!type){
             type = BuildType.ALL;
         }
