@@ -15,7 +15,8 @@ async function main()
         tsPaths: {
             '@rws-config': [path.join(rwsPath.findRootWorkspacePath(), 'rws.config.ts')]
         },
-        isDev: true
+        isDev: true,
+        dynamicImports: false
     });
 }
 
