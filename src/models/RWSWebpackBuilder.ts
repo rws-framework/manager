@@ -57,6 +57,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               outputFileName: workspaceCfg?.outputFileName || `${this.buildType.toLowerCase()}.rws.js`,
               tsConfig: tsConfigControls.tsConfig as any,
               publicDir:  workspaceCfg?.publicDir,       
+              cssDir:  workspaceCfg?.cssDir,
               externalsOverride: workspaceCfg?._builders?.webpack?.externalsOverride,                    
               loaderIgnoreExceptions: workspaceCfg?._builders?.webpack?.loaderIgnoreExceptions,                    
              

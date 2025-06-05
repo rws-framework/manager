@@ -43,6 +43,7 @@ export interface IFrontendConfig extends BaseRWSConfig {
     hotReload?: boolean;
     pkgReport?: boolean;
     parted?: boolean;
+    cssDir?: string,
     partedDirUrlPrefix?: string;
     copyAssets?: {
         [destinationPath: string]: string[];
