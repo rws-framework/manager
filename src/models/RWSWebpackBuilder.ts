@@ -43,9 +43,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             const tsConfigControls = TSConfigHelper.create<TSConfigHelper>(this.config).build(                
                 this.appRootPath,                
                 this.buildType
-            );                      
-
-            console.log(workspaceCfg._builders?.webpack);
+            );                                  
 
             const buildCfg: WebpackConfig = await rwsBuilder(this.appRootPath, {   
               environment: workspaceCfg.environment || Environment.NODE,
@@ -60,6 +58,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               cssDir:  workspaceCfg?.cssDir,
               externalsOverride: workspaceCfg?._builders?.webpack?.externalsOverride,                    
               loaderIgnoreExceptions: workspaceCfg?._builders?.webpack?.loaderIgnoreExceptions,                    
+              extraNodeModules: workspaceCfg?._builders?.webpack?.extraNodeModules,    
              
               //front
               parted: workspaceCfg?.parted,
@@ -84,7 +83,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async getBuildData() {
-        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData } & { externalsOverride?: string[], loaderIgnoreExceptions?: string[] };
+        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData } & { externalsOverride?: string[], loaderIgnoreExceptions?: string[], extraNodeModules?: string[] };
         type RWSBuilderType = ((appRoot: string, buildParams: WorkspaceBuildParams, workspaceDir: string) => Promise<WebpackConfig>) | undefined;
 
         let rwsBuilder: RWSBuilderType;
