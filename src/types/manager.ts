@@ -35,6 +35,8 @@ export interface BuildConfig<T> {
 }
 
 export interface IWebpackRWSConfig extends BuildConfig<WebpackConfig> {
+    nestedNodePackages?: string[]
+    selfContained?: boolean
     externalsOverride?: string[]
     loaderIgnoreExceptions?: string[],
     extraNodeModules?: string[]

@@ -57,6 +57,8 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
               publicDir:  workspaceCfg?.publicDir,       
               cssDir:  workspaceCfg?.cssDir,
               externalsOverride: workspaceCfg?._builders?.webpack?.externalsOverride,                    
+              selfContained: workspaceCfg?._builders?.webpack?.selfContained, 
+              nestedNodePackages: workspaceCfg?._builders?.webpack?.nestedNodePackages, 
               loaderIgnoreExceptions: workspaceCfg?._builders?.webpack?.loaderIgnoreExceptions,                    
               extraNodeModules: workspaceCfg?._builders?.webpack?.extraNodeModules,    
              
@@ -83,7 +85,15 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
     }
 
     async getBuildData() {
-        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData } & { externalsOverride?: string[], loaderIgnoreExceptions?: string[], extraNodeModules?: string[] };
+        type WorkspaceBuildParams = Omit<IFrontendConfig & IBackendConfig & ICLIConfig, 'workspaceDir'> 
+        & { dev: boolean, tsConfig: (pkgPath: string, fileCreation?: boolean) => TSConfigData } 
+        & { 
+            externalsOverride?: string[], 
+            loaderIgnoreExceptions?: string[] 
+            nestedNodePackages?: string[]
+            selfContained?: boolean,
+            extraNodeModules?: string[]
+        };
         type RWSBuilderType = ((appRoot: string, buildParams: WorkspaceBuildParams, workspaceDir: string) => Promise<WebpackConfig>) | undefined;
 
         let rwsBuilder: RWSBuilderType;
