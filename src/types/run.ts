@@ -34,3 +34,4 @@ export interface RunnableConfig extends BaseRWSConfig {
     }
 }
 
+export type VerboseConsole = Console & { verboseLog: (message?: any, ...optionalParams: any[]) => void }

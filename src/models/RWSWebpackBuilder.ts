@@ -4,7 +4,7 @@ import type { Compiler, Stats, Configuration as WebpackConfig } from 'webpack';
 import webpack from 'webpack';
 import fs from 'fs';
 import { BuildersConfigurations, IBackendConfig, ICLIConfig, IFrontendConfig, IWebpackRWSConfig } from '../types/manager';
-import { BuildType, Environment, ManagerRunOptions, RunnableConfig } from '../types/run';
+import { BuildType, Environment, ManagerRunOptions, RunnableConfig, VerboseConsole } from '../types/run';
 import { TSConfigData } from '../types/tsc';
 import { rwsPath } from '@rws-framework/console';
 import { TSConfigHelper } from '../helper/TSConfigHelper';
@@ -78,7 +78,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
 
             tsConfigControls.remove();
 
-            this.log(`Build complete.`);
+            (console as VerboseConsole).verboseLog(`${chalk.green('[RWS Builder]')} ${this.buildType} build complete.`);
         }else{
            
         }
@@ -245,7 +245,7 @@ export class RWSWebpackBuilder extends RWSBuilder<WebpackConfig> {
             if(changedFiles){
                 const changedList = Array.from(changedFiles);
                 if(changedList.length) {
-                    console.log('🔄 Detected file changes:', changedList);  
+                    (console as VerboseConsole).verboseLog('🔄 Detected file changes:', changedList);  
                     // comp.watching?.invalidate();           
                 }
             }            

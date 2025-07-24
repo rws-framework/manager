@@ -14,6 +14,11 @@ enum RWSManagerActions {
   CLI = 'cli'
 }
 
+if(!(console as any).verboseLog){
+  let oldLog = console.log;
+  (console as any).verboseLog = oldLog;
+}
+
 async function main(): Promise<void>
 {  
   console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));
