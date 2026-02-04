@@ -38,7 +38,6 @@ async function main(): Promise<void>
 
 // Make sure the main function is executed when this module is run directly
 if (require.main === module) {
-  console.log(chalk.bgGreen('[RWS MANAGER] Starting systems...'));
   main().catch(error => {
     console.error(chalk.red(`[RWS MANAGER] Error: ${error.message}`));
     console.error(error);

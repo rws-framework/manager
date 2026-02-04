@@ -7,7 +7,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 
 async function main()
-{        
+{           
     const rootDir = rwsPath.findRootWorkspacePath();
 
     const packageJsonPath = path.join(rootDir, 'package.json');
@@ -42,6 +42,7 @@ async function main()
             '@rws-config': [path.join(rootDir, 'rws.config.ts')]
         },
         isDev: true,
+        isVerbose: true,
         extraNodeModules,
         dynamicImports: false,
         dirnameFilenameReplace: false

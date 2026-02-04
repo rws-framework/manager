@@ -3,8 +3,9 @@ import { rwsShell } from "@rws-framework/console";
 import path from 'path';
 import fs from 'fs';
 
-import {  BuildType, Environment } from '../types/run';
+import {  BuildType, Environment, ManagerRunOptions } from '../types/run';
 import { RunnableConfig } from '../types/run';
+import { argv } from 'process';
 
 export interface IRunnerParams {
     appRootPath: string;
@@ -24,7 +25,24 @@ export class RWSRunner {
         const sectionConfig = this.config.getBuildTypeSection(buildType) as RunnableConfig;        
         const outFilePath = this.config.getOutputFilePath(this.params.appRootPath, buildType as Exclude<BuildType, BuildType.ALL>);
         
-        const extraParams: string = buildType === BuildType.CLI && this.config.getAppParams().length ? ` ${this.config.getAppParams().join(' ')}` : '';
+        // Get CLI arguments after the buildType but filter out manager options
+        let extraParams = '';
+        if (buildType === BuildType.CLI) {
+            const argv = process.argv;
+            // Find the index of buildType in argv and include everything after it
+            const buildTypeIndex = argv.findIndex(arg => arg === buildType);
+            if (buildTypeIndex !== -1 && buildTypeIndex + 1 < argv.length) {
+                const allCliArgs = argv.slice(buildTypeIndex + 1);
+                // Filter out manager options using the enum
+                const managerOptions = Object.values(ManagerRunOptions).map(option => `--${option}`);
+                const filteredArgs = allCliArgs.filter(arg => !managerOptions.includes(arg));
+                if (filteredArgs.length > 0) {
+                    extraParams = ` ${filteredArgs.join(' ')}`;
+                }
+            }
+        }
+        
+        console.log({extraParams, argv: process.argv});
         await rwsShell.runCommand(`${sectionConfig.environment} ${outFilePath}${extraParams}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
     }   
     
