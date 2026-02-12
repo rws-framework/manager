@@ -41,8 +41,7 @@ export class RWSRunner {
                 }
             }
         }
-        
-        console.log({extraParams, argv: process.argv});
+                
         await rwsShell.runCommand(`${sectionConfig.environment} ${outFilePath}${extraParams}`, path.join(this.params.appRootPath, sectionConfig.workspaceDir));
     }   
     
