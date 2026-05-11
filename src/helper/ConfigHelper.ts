@@ -1,6 +1,6 @@
 import path from 'path';
 import { BuilderType, BuildType } from '../types/run';
-import { BuildersConfigurations, IManagerConfig, BuildConfig, BaseRWSConfig, RunnableConfig, IRWSWorkspaces, IFrontendConfig, IBackendConfig, ICLIConfig, IWebpackRWSConfig } from '../types/manager';
+import { BuildersConfigurations, IManagerConfig, BuildConfig, BaseRWSConfig, RunnableConfig, IRWSWorkspaces, IFrontendConfig, IBackendConfig, ICLIConfig, IWebpackRWSConfig, IServiceWorkerConfig } from '../types/manager';
 import Singleton from './_singleton';
 
 export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Singleton {
@@ -46,7 +46,7 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
         return path.join(appRootPath, sectionCfg.workspaceDir, outputFileDir, outputFileName)
     }
 
-    getBuildTypeSection(type: Exclude<BuildType, BuildType.ALL>): IFrontendConfig & IBackendConfig & ICLIConfig
+    getBuildTypeSection(type: Exclude<BuildType, BuildType.ALL>): IFrontendConfig & IBackendConfig & ICLIConfig & IServiceWorkerConfig
     {
         const buildTypeSection = this.data.build[type as keyof IRWSWorkspaces];
         
@@ -54,6 +54,7 @@ export class ConfigHelper<T extends IManagerConfig = IManagerConfig> extends Sin
             case BuildType.FRONT: return buildTypeSection as IFrontendConfig;
             case BuildType.BACK: return buildTypeSection as IBackendConfig;
             case BuildType.CLI: return buildTypeSection as ICLIConfig;
+            case BuildType.SW: return buildTypeSection as IServiceWorkerConfig;
             default: throw new Error('[RWS] Wrong build type value.')
         }    
     }

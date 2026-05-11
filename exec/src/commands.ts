@@ -4,7 +4,8 @@ const commands: CommandsType = {
     build: {
       front: null,
       back: null,
-      cli: null
+      cli: null,
+      sw: null
     },
     run: {
       front: null,

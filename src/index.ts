@@ -5,6 +5,7 @@ import type { TSConfigControls, TSConfigData } from './types/tsc';
 import { RWSGenerator } from './models/RWSGenerator';
 import { RWSRunner } from './models/RWSRunner';
 import { RWSWebpackBuilder } from './models/RWSWebpackBuilder';
+import { RWSServiceWorkerBuilder } from './models/RWSServiceWorkerBuilder';
 import { ConfigHelper } from './helper/ConfigHelper';
 
 export {
@@ -13,6 +14,7 @@ export {
     RWSGenerator,
     RWSRunner,
     RWSWebpackBuilder,
+    RWSServiceWorkerBuilder,
     ConfigHelper
 }
 

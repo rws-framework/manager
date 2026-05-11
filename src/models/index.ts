@@ -1,5 +1,7 @@
 import { RWSWebpackBuilder } from "./RWSWebpackBuilder";
+import { RWSServiceWorkerBuilder } from "./RWSServiceWorkerBuilder";
 
 export default {
-    webpack: RWSWebpackBuilder
+    webpack: RWSWebpackBuilder,
+    sw: RWSServiceWorkerBuilder
 }

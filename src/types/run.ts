@@ -4,12 +4,14 @@ export enum BuildType {
     FRONT = 'front',
     CLI = 'cli',
     BACK = 'back',  
+    SW = 'sw',
     ALL = 'all'
 }
 
 export enum BuilderType {
     WEBPACK = 'webpack',
-    VITE = 'vite'    
+    VITE = 'vite',
+    SW = 'sw'
 }
 
 export enum ManagerRunOptions {

@@ -70,10 +70,15 @@ export interface IBackendConfig  extends RunnableConfig {
 export interface ICLIConfig  extends RunnableConfig {    
 }
 
+export interface IServiceWorkerConfig extends BaseRWSConfig {
+    swSrcPath: string;  // path to the TS service worker entry relative to workspaceDir
+}
+
 export interface IRWSWorkspaces {
     front?: IFrontendConfig;
     back?: IBackendConfig;
     cli?: ICLIConfig;
+    sw?: IServiceWorkerConfig;
 }    
 
 export interface IManagerConfig {

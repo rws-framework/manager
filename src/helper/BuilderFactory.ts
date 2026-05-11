@@ -15,5 +15,10 @@ export interface IBuilderFactoryParams {
 export function BuilderFactory(this: RWSManager, params: IBuilderFactoryParams, config: ConfigHelper){
     const { builderType } = params;
     const builderModel: any = (builders as { [key: string]: typeof RWSBuilder })[builderType];
+
+    if (!builderModel) {
+        throw new Error(`[RWS BuilderFactory] No builder registered for type "${builderType}"`);
+    }
+
     return new builderModel(params, config, this);
 }

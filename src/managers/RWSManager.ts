@@ -98,10 +98,13 @@ export class RWSManager extends Singleton {
         await generator.generate();    
     }
 
-    private async buildWorkSpace(type: Exclude<BuildType, BuildType.ALL>, builderType: BuilderType = BuilderType.WEBPACK){             
+    private async buildWorkSpace(type: Exclude<BuildType, BuildType.ALL>, builderType?: BuilderType){             
         const workspaceCfg = this.config.getBuildTypeSection(type);
         const buildPath = path.join(this.appRootPath, workspaceCfg.workspaceDir);
         const isWatch = this.commandOptions.find(item => item === '--watch') !== undefined;
+
+        // Resolve the correct builder type
+        const resolvedBuilderType = builderType ?? (type === BuildType.SW ? BuilderType.SW : BuilderType.WEBPACK);
 
         this.log(`${isWatch ? 'Watching' : 'Building'} ${chalk.blue(type.toLowerCase())}`);        
         
@@ -109,7 +112,7 @@ export class RWSManager extends Singleton {
             workspacePath: buildPath, 
             appRootPath: this.appRootPath, 
             workspaceType: type, 
-            builderType
+            builderType: resolvedBuilderType
         }, this.config))
             .setVerbose(this.isVerbose || isWatch)
             .build(isWatch);

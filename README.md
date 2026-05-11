@@ -99,10 +99,91 @@ export default function config(): IManagerConfig {
                 entrypoint: './src/cli.ts',
                 workspaceDir: './backend',
                 outputFileName: 'inthub.cli.js',                                
+            },
+            sw: {
+                workspaceDir: './frontend',
+                swSrcPath: 'src/service_worker/index.ts'
             }
         }
     }
 }
+```
+
+## Service Worker Support
+
+The manager supports building a TypeScript service worker using the `sw` build type. The service worker is compiled by the `@rws-framework/client` webpack pipeline (`build:sw`) and output to `public/service_worker.js` inside the workspace directory.
+
+### 1. Add `sw` to `rws.config.ts`
+
+```typescript
+sw: {
+    workspaceDir: './frontend',
+    swSrcPath: 'src/service_worker/index.ts'
+}
+```
+
+### 2. Create the TypeScript service worker
+
+Extend `RWSServiceWorker` from the client package:
+
+```typescript
+// frontend/src/service_worker/index.ts
+import RWSServiceWorker from '@rws-framework/client/service_worker/src/_service_worker';
+import IRWSUser from '@rws-framework/client/src/types/IRWSUser';
+
+const _self = self as unknown as ServiceWorkerGlobalScope;
+
+class MyServiceWorker extends RWSServiceWorker<IRWSUser> {
+    private authToken: string | null = null;
+
+    async onInit(): Promise<void> {
+        _self.addEventListener('message', (event: ExtendableMessageEvent) => {
+            if (!event.data) return;
+
+            if (event.data.command === 'set_token') {
+                this.authToken = event.data.params?.token ?? null;
+            }
+        });
+
+        _self.addEventListener('fetch', (event: FetchEvent) => {
+            this.handleFetch(event);
+        });
+    }
+
+    private handleFetch(event: FetchEvent): void {
+        const url = new URL(event.request.url);
+
+        // Intercept /uploads/* and inject Bearer token
+        if (!url.pathname.startsWith('/uploads/') || !this.authToken) {
+            return;
+        }
+
+        const modifiedHeaders = new Headers(event.request.headers);
+        modifiedHeaders.set('Authorization', `Bearer ${this.authToken}`);
+
+        event.respondWith(fetch(new Request(event.request, { headers: modifiedHeaders })));
+    }
+}
+
+MyServiceWorker.create(_self);
+```
+
+### 3. Register the service worker and send token from the frontend app
+
+```typescript
+import ServiceWorkerService from '@rws-framework/client/src/services/ServiceWorkerService';
+
+// On app start
+await swService.registerServiceWorker();
+
+// Send token whenever the user logs in or token is restored from storage
+swService.sendDataToServiceWorker('set_token', { token }, 'auth');
+```
+
+### 4. Build
+
+```bash
+yarn rws build sw
 ```
 
 ## Configuration Options
@@ -128,6 +209,9 @@ export default function config(): IManagerConfig {
   - `entrypoint`: Path to CLI entry file
   - `workspaceDir`: Path to CLI/command source
   - `outputFileName`: Name of CLI bundle
+- `build.sw`: Service Worker build options
+  - `workspaceDir`: Path to workspace containing the service worker source (usually `./frontend`)
+  - `swSrcPath`: Path to the TypeScript entry file relative to `workspaceDir` (e.g. `src/service_worker/index.ts`)
 
 ### Example: Frontend Builder Paths
 ```json
@@ -272,6 +356,10 @@ export default function config(): IManagerConfig {
                 env: {
                     CLI_MODE: env.CLI_MODE
                 }
+            },
+            sw: {
+                workspaceDir: './frontend',
+                swSrcPath: 'src/service_worker/index.ts'
             }
         }
     }
