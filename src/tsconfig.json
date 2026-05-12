@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "rootDir": ".",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "target": "ES2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strictNullChecks": false,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "allowJs": true,
+    "noEmit": true,
+    "lib": ["DOM", "ESNext"],
+  },
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

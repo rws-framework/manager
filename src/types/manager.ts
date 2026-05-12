@@ -72,6 +72,7 @@ export interface ICLIConfig  extends RunnableConfig {
 
 export interface IServiceWorkerConfig extends BaseRWSConfig {
     swSrcPath: string;  // path to the TS service worker entry relative to workspaceDir
+    publicDir?: string; // output public directory (e.g. './frontend/public'); cwd for webpack is set to its parent
 }
 
 export interface IRWSWorkspaces {

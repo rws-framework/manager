@@ -12,7 +12,7 @@ export abstract class RWSBuilder<C> {
     protected buildType: Exclude<BuildType, BuildType.ALL>;
     protected TYPE: BuilderType;
     
-    private verbose: boolean;
+    private verbose: boolean = false;
 
     constructor(params: IBuilderFactoryParams, protected config: ConfigHelper, protected theManager: RWSManager){
         this.workspacePath = params.workspacePath;
