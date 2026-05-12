@@ -1,6 +1,8 @@
 {
   "compilerOptions": {  
+    "ignoreDeprecations": "6.0",
     "baseUrl": "./",
+    "rootDir": "..",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "emitDeclarationOnly": false,
