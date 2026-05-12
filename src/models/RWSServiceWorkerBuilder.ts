@@ -49,6 +49,7 @@ export class RWSServiceWorkerBuilder extends RWSBuilder<null> {
         const tsConfigContent = {
             compilerOptions: {
                 ...TSConfigHelper.create<TSConfigHelper>(this.config).getDefaultCompilerOptions(),
+                ignoreDeprecations: '6.0',
                 baseUrl: '.',
                 rootDir: rootDirRelative || '.',
                 module: 'es2022',
